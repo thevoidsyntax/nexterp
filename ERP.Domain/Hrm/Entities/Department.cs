@@ -1,11 +1,12 @@
 using ERP.Domain.Common;
+using ERP.Domain.Common.Modules;
 
 namespace ERP.Domain.Hrm.Entities;
 
 /// <summary>
 /// Department entity
 /// </summary>
-public class Department : BaseEntity
+public class Department : BaseEntity, ITenantEntity
 {
     public Guid OrganizationId { get; private set; }
     public string Name { get; private set; } = string.Empty;
@@ -66,7 +67,7 @@ public class Department : BaseEntity
 /// <summary>
 /// Position/Job Title entity
 /// </summary>
-public class Position : BaseEntity
+public class Position : BaseEntity, ITenantEntity
 {
     public Guid OrganizationId { get; private set; }
     public Guid DepartmentId { get; private set; }

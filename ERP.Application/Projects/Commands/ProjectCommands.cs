@@ -2,6 +2,7 @@ using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ERP.Application.Common.Base;
+using ERP.Application.Common.Behaviors;
 using ERP.Application.Common.Interfaces;
 using ERP.Application.Projects.DTOs;
 using ERP.Domain.Projects.Entities;
@@ -12,6 +13,7 @@ namespace ERP.Application.Projects.Commands;
 /// <summary>
 /// Command to create a project
 /// </summary>
+[RequiresPermission("projects.projects.create")]
 public class CreateProjectCommand : ICommand<Guid>
 {
     public Guid OrganizationId { get; set; }
@@ -54,19 +56,28 @@ public class CreateProjectCommandValidator : AbstractValidator<CreateProjectComm
 public class CreateProjectCommandHandler : IRequestHandler<CreateProjectCommand, Result<Guid>>
 {
     private readonly IApplicationDbContext _context;
+    private readonly ICurrentUserService _currentUser;
 
-    public CreateProjectCommandHandler(IApplicationDbContext context)
+    public CreateProjectCommandHandler(IApplicationDbContext context, ICurrentUserService currentUser)
     {
         _context = context;
+        _currentUser = currentUser;
     }
 
     public async Task<Result<Guid>> Handle(CreateProjectCommand request, CancellationToken cancellationToken)
     {
+        // Organization is taken from the authenticated user's context, not the
+        // request body, so a caller cannot create projects under another org.
+        if (_currentUser.OrganizationId == null)
+            return Result<Guid>.Failure("User is not associated with an organization");
+
+        var organizationId = _currentUser.OrganizationId.Value;
+
         // Check for duplicate code
         if (!string.IsNullOrWhiteSpace(request.Code))
         {
             var existing = await _context.Set<Project>()
-                .AnyAsync(p => p.OrganizationId == request.OrganizationId &&
+                .AnyAsync(p => p.OrganizationId == organizationId &&
                               p.Code == request.Code.ToUpperInvariant() &&
                               !p.IsDeleted, cancellationToken);
 
@@ -75,7 +86,7 @@ public class CreateProjectCommandHandler : IRequestHandler<CreateProjectCommand,
         }
 
         var project = Project.Create(
-            request.OrganizationId,
+            organizationId,
             request.Name,
             request.Code,
             request.Description,
@@ -96,6 +107,7 @@ public class CreateProjectCommandHandler : IRequestHandler<CreateProjectCommand,
 /// <summary>
 /// Command to create a project task
 /// </summary>
+[RequiresPermission("projects.tasks.create")]
 public class CreateProjectTaskCommand : ICommand<Guid>
 {
     public Guid OrganizationId { get; set; }
@@ -155,8 +167,10 @@ public class CreateProjectTaskCommandHandler : IRequestHandler<CreateProjectTask
         if (!Enum.TryParse<TaskPriority>(request.Priority, true, out var priority))
             return Result<Guid>.Failure("Invalid priority");
 
+        // Task's organization is taken from its parent project (already tenant-scoped
+        // by the query above), not the request body.
         var task = ProjectTask.Create(
-            request.OrganizationId,
+            project.OrganizationId,
             request.ProjectId,
             request.Title,
             request.Description,
@@ -180,6 +194,7 @@ public class CreateProjectTaskCommandHandler : IRequestHandler<CreateProjectTask
 /// <summary>
 /// Command to update task status
 /// </summary>
+[RequiresPermission("projects.tasks.update")]
 public class UpdateTaskStatusCommand : ICommand
 {
     public Guid TaskId { get; set; }

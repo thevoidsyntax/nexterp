@@ -2,6 +2,7 @@ using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ERP.Application.Common.Base;
+using ERP.Application.Common.Behaviors;
 using ERP.Application.Common.Interfaces;
 using ERP.Application.Inventory.DTOs;
 using ERP.Domain.Inventory.Entities;
@@ -11,6 +12,7 @@ namespace ERP.Application.Inventory.Commands.Warehouses;
 /// <summary>
 /// Command to create a new warehouse
 /// </summary>
+[RequiresPermission("inventory.warehouses.create")]
 public class CreateWarehouseCommand : ICommand<Guid>
 {
     public string Name { get; set; } = string.Empty;

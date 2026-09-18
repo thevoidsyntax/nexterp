@@ -1,3 +1,5 @@
+using ERP.Domain.Common.Modules;
+
 namespace ERP.Domain.Analytics.Entities;
 
 /// <summary>
@@ -17,7 +19,7 @@ public class DashboardWidget
 /// <summary>
 /// Audit log entry
 /// </summary>
-public class AuditLog
+public class AuditLog : ITenantEntity
 {
     public Guid Id { get; set; }
     public Guid OrganizationId { get; set; }
@@ -37,7 +39,7 @@ public class AuditLog
 /// <summary>
 /// Email log
 /// </summary>
-public class EmailLog
+public class EmailLog : ITenantEntity
 {
     public Guid Id { get; set; }
     public Guid OrganizationId { get; set; }

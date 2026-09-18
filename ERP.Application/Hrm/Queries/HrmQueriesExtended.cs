@@ -13,6 +13,7 @@ namespace ERP.Application.Hrm.Queries;
 /// Query to get paginated employee list
 /// </summary>
 [RequiresModule("HRM")]
+[RequiresPermission("hrm.employees.read")]
 public class GetEmployeesPaginatedQuery : IRequest<Result<PaginatedResult<EmployeeListDto>>>
 {
     public int Page { get; set; } = 1;
@@ -164,6 +165,7 @@ public class PaginatedResult<T>
 /// Query to get employee details with all related information
 /// </summary>
 [RequiresModule("HRM")]
+[RequiresPermission("hrm.employees.read")]
 public class GetEmployeeDetailsQuery : IRequest<Result<EmployeeDetailsDto>>
 {
     public Guid EmployeeId { get; set; }
@@ -327,6 +329,7 @@ public class AttendanceListDto
 /// Query to get leave balance summary
 /// </summary>
 [RequiresModule("HRM")]
+[RequiresPermission("hrm.leave.read")]
 public class GetLeaveBalanceSummaryQuery : IRequest<Result<LeaveBalanceSummaryDto>>
 {
     public Guid EmployeeId { get; set; }
@@ -391,6 +394,7 @@ public class LeaveBalanceSummaryDto
 /// Query to get attendance report
 /// </summary>
 [RequiresModule("HRM")]
+[RequiresPermission("hrm.attendance.read")]
 public class GetAttendanceReportQuery : IRequest<Result<AttendanceReportDto>>
 {
     public Guid? DepartmentId { get; set; }

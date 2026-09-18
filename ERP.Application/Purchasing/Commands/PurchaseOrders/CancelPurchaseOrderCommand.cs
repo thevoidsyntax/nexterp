@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ERP.Application.Common.Base;
+using ERP.Application.Common.Behaviors;
 using ERP.Application.Common.Interfaces;
 using ERP.Domain.Purchasing.Entities;
 
@@ -9,6 +10,7 @@ namespace ERP.Application.Purchasing.Commands.PurchaseOrders;
 /// <summary>
 /// Command to cancel a purchase order
 /// </summary>
+[RequiresPermission("purchasing.orders.cancel")]
 public class CancelPurchaseOrderCommand : ICommand<bool>
 {
     public Guid Id { get; set; }

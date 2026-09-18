@@ -1,4 +1,5 @@
 using ERP.Domain.Common;
+using ERP.Domain.Common.Modules;
 using ERP.Domain.Accounting.Enums;
 
 namespace ERP.Domain.Accounting.Entities;
@@ -6,7 +7,7 @@ namespace ERP.Domain.Accounting.Entities;
 /// <summary>
 /// Account entity representing a chart of accounts entry
 /// </summary>
-public class Account : BaseEntity
+public class Account : BaseEntity, ITenantEntity
 {
     public Guid OrganizationId { get; private set; }
     public string AccountCode { get; private set; } = string.Empty;
@@ -122,7 +123,7 @@ public class Account : BaseEntity
 /// <summary>
 /// Journal Entry header - represents a financial transaction
 /// </summary>
-public class JournalEntry : BaseEntity
+public class JournalEntry : BaseEntity, ITenantEntity
 {
     public Guid OrganizationId { get; private set; }
     public string EntryNumber { get; private set; } = string.Empty;

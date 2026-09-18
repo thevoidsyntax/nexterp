@@ -239,50 +239,108 @@ public static class DatabaseSeeder
         {
             logger.LogInformation("Seeding module permissions...");
 
-            // Sales module permissions
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""ModulePermissions"" (""Id"", ""ModuleId"", ""Permission"", ""Description"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({Guid.NewGuid()}, {SalesModuleId}, 'SALES.READ', 'View sales data', FALSE, {now}, {now})");
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""ModulePermissions"" (""Id"", ""ModuleId"", ""Permission"", ""Description"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({Guid.NewGuid()}, {SalesModuleId}, 'SALES.CREATE', 'Create sales orders/quotes', FALSE, {now}, {now})");
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""ModulePermissions"" (""Id"", ""ModuleId"", ""Permission"", ""Description"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({Guid.NewGuid()}, {SalesModuleId}, 'SALES.UPDATE', 'Update sales orders', FALSE, {now}, {now})");
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""ModulePermissions"" (""Id"", ""ModuleId"", ""Permission"", ""Description"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({Guid.NewGuid()}, {SalesModuleId}, 'SALES.DELETE', 'Delete sales orders', FALSE, {now}, {now})");
+            // Permission strings match the [RequiresPermission("module.resource.action")]
+            // attributes enforced by PermissionAuthorizationBehavior on each module's
+            // commands/queries, covering all 9 licensable modules.
+            var permissions = new (Guid ModuleId, string Permission, string Description)[]
+            {
+                // Sales
+                (SalesModuleId, "sales.customers.read", "View customers"),
+                (SalesModuleId, "sales.customers.create", "Create customers"),
+                (SalesModuleId, "sales.customers.update", "Update customers"),
+                (SalesModuleId, "sales.customers.delete", "Delete customers"),
+                (SalesModuleId, "sales.orders.read", "View sales orders"),
+                (SalesModuleId, "sales.orders.create", "Create sales orders/quotes"),
+                (SalesModuleId, "sales.orders.submit", "Submit sales orders for approval"),
+                (SalesModuleId, "sales.orders.approve", "Approve sales orders"),
+                (SalesModuleId, "sales.orders.cancel", "Cancel sales orders"),
 
-            // HRM module permissions
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""ModulePermissions"" (""Id"", ""ModuleId"", ""Permission"", ""Description"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({Guid.NewGuid()}, {HrmModuleId}, 'HRM.READ', 'View HR data', FALSE, {now}, {now})");
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""ModulePermissions"" (""Id"", ""ModuleId"", ""Permission"", ""Description"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({Guid.NewGuid()}, {HrmModuleId}, 'HRM.EMPLOYEE.CREATE', 'Add new employees', FALSE, {now}, {now})");
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""ModulePermissions"" (""Id"", ""ModuleId"", ""Permission"", ""Description"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({Guid.NewGuid()}, {HrmModuleId}, 'HRM.EMPLOYEE.UPDATE', 'Update employee data', FALSE, {now}, {now})");
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""ModulePermissions"" (""Id"", ""ModuleId"", ""Permission"", ""Description"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({Guid.NewGuid()}, {HrmModuleId}, 'HRM.ATTENDANCE.MANAGE', 'Manage attendance records', FALSE, {now}, {now})");
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""ModulePermissions"" (""Id"", ""ModuleId"", ""Permission"", ""Description"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({Guid.NewGuid()}, {HrmModuleId}, 'HRM.LEAVE.APPROVE', 'Approve leave requests', FALSE, {now}, {now})");
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""ModulePermissions"" (""Id"", ""ModuleId"", ""Permission"", ""Description"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({Guid.NewGuid()}, {HrmModuleId}, 'HRM.PAYROLL.VIEW', 'View payroll data', FALSE, {now}, {now})");
+                // Purchasing
+                (PurchasingModuleId, "purchasing.suppliers.read", "View suppliers"),
+                (PurchasingModuleId, "purchasing.suppliers.create", "Create suppliers"),
+                (PurchasingModuleId, "purchasing.suppliers.update", "Update suppliers"),
+                (PurchasingModuleId, "purchasing.suppliers.delete", "Delete suppliers"),
+                (PurchasingModuleId, "purchasing.orders.read", "View purchase orders"),
+                (PurchasingModuleId, "purchasing.orders.create", "Create purchase orders"),
+                (PurchasingModuleId, "purchasing.orders.submit", "Submit purchase orders for approval"),
+                (PurchasingModuleId, "purchasing.orders.approve", "Approve purchase orders"),
+                (PurchasingModuleId, "purchasing.orders.cancel", "Cancel purchase orders"),
 
-            // Inventory module permissions
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""ModulePermissions"" (""Id"", ""ModuleId"", ""Permission"", ""Description"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({Guid.NewGuid()}, {InventoryModuleId}, 'INV.READ', 'View inventory data', FALSE, {now}, {now})");
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""ModulePermissions"" (""Id"", ""ModuleId"", ""Permission"", ""Description"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({Guid.NewGuid()}, {InventoryModuleId}, 'INV.STOCK.IN', 'Record stock in transactions', FALSE, {now}, {now})");
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""ModulePermissions"" (""Id"", ""ModuleId"", ""Permission"", ""Description"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({Guid.NewGuid()}, {InventoryModuleId}, 'INV.STOCK.OUT', 'Record stock out transactions', FALSE, {now}, {now})");
+                // Inventory
+                (InventoryModuleId, "inventory.warehouses.read", "View warehouses"),
+                (InventoryModuleId, "inventory.warehouses.create", "Create warehouses"),
+                (InventoryModuleId, "inventory.items.read", "View stock items"),
+                (InventoryModuleId, "inventory.items.create", "Create stock items"),
+
+                // Accounting
+                (AccountingModuleId, "accounting.accounts.read", "View chart of accounts"),
+                (AccountingModuleId, "accounting.accounts.create", "Create accounts"),
+                (AccountingModuleId, "accounting.accounts.update", "Update accounts"),
+                (AccountingModuleId, "accounting.accounts.delete", "Delete accounts"),
+                (AccountingModuleId, "accounting.journals.read", "View journal entries"),
+                (AccountingModuleId, "accounting.journals.create", "Create journal entries"),
+                (AccountingModuleId, "accounting.journals.submit", "Submit journal entries for approval"),
+                (AccountingModuleId, "accounting.journals.approve", "Approve journal entries"),
+                (AccountingModuleId, "accounting.journals.post", "Post approved journal entries"),
+                (AccountingModuleId, "accounting.journals.reverse", "Reverse posted journal entries"),
+                (AccountingModuleId, "accounting.journals.cancel", "Cancel journal entries"),
+
+                // HRM
+                (HrmModuleId, "hrm.employees.read", "View employees"),
+                (HrmModuleId, "hrm.employees.create", "Add new employees"),
+                (HrmModuleId, "hrm.employees.update", "Update employee data"),
+                (HrmModuleId, "hrm.employees.delete", "Delete employees"),
+                (HrmModuleId, "hrm.departments.read", "View department statistics"),
+                (HrmModuleId, "hrm.departments.create", "Create departments"),
+                (HrmModuleId, "hrm.departments.update", "Update departments"),
+                (HrmModuleId, "hrm.positions.create", "Create positions"),
+                (HrmModuleId, "hrm.positions.update", "Update positions"),
+                (HrmModuleId, "hrm.attendance.read", "View attendance records"),
+                (HrmModuleId, "hrm.attendance.checkin", "Check in / check out"),
+                (HrmModuleId, "hrm.attendance.manage", "Manually record/override attendance"),
+                (HrmModuleId, "hrm.leave.read", "View leave requests and balances"),
+                (HrmModuleId, "hrm.leave.request", "Submit/cancel own leave requests"),
+                (HrmModuleId, "hrm.leave.approve", "Approve leave requests"),
+                (HrmModuleId, "hrm.leave.manage", "Manage leave balances"),
+                (HrmModuleId, "hrm.overtime.request", "Submit/cancel overtime requests"),
+                (HrmModuleId, "hrm.overtime.approve", "Approve overtime requests"),
+                (HrmModuleId, "hrm.payroll.view", "View payroll data and payslips"),
+                (HrmModuleId, "hrm.payroll.manage", "Create/approve/pay/delete payroll"),
+                (HrmModuleId, "hrm.dashboard.read", "View HR dashboard"),
+
+                // Projects
+                (ProjectsModuleId, "projects.projects.read", "View projects"),
+                (ProjectsModuleId, "projects.projects.create", "Create projects"),
+                (ProjectsModuleId, "projects.tasks.read", "View project tasks"),
+                (ProjectsModuleId, "projects.tasks.create", "Create project tasks"),
+                (ProjectsModuleId, "projects.tasks.update", "Update project task status"),
+
+                // Quality
+                (QualityModuleId, "quality.inspections.read", "View quality inspections"),
+                (QualityModuleId, "quality.inspections.create", "Create quality inspections"),
+                (QualityModuleId, "quality.inspections.update", "Complete quality inspections"),
+                (QualityModuleId, "quality.ncr.read", "View non-conformance reports"),
+                (QualityModuleId, "quality.ncr.create", "Create non-conformance reports"),
+                (QualityModuleId, "quality.ncr.update", "Resolve non-conformance reports"),
+
+                // Analytics
+                (AnalyticsModuleId, "analytics.audit.read", "View audit logs"),
+                (AnalyticsModuleId, "analytics.audit.create", "Write audit log entries"),
+                (AnalyticsModuleId, "analytics.notifications.create", "Send notifications to users"),
+
+                // Assets
+                (AssetsModuleId, "assets.assets.read", "View fixed assets"),
+                (AssetsModuleId, "assets.assets.create", "Create fixed assets"),
+                (AssetsModuleId, "assets.assets.update", "Update fixed assets"),
+                (AssetsModuleId, "assets.maintenance.create", "Schedule asset maintenance"),
+            };
+
+            foreach (var (moduleId, permission, description) in permissions)
+            {
+                await context.Database.ExecuteSqlAsync($@"
+                    INSERT INTO ""ModulePermissions"" (""Id"", ""ModuleId"", ""Permission"", ""Description"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                    ({Guid.NewGuid()}, {moduleId}, {permission}, {description}, FALSE, {now}, {now})");
+            }
         }
 
         // ============ ORGANIZATION LICENSE (Demo gets Enterprise) ============

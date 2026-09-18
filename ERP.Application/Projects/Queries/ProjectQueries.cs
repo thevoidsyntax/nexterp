@@ -1,10 +1,12 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ERP.Application.Common.Base;
+using ERP.Application.Common.Behaviors;
 using ERP.Application.Common.Interfaces;
 
 namespace ERP.Application.Projects.Queries;
 
+[RequiresPermission("projects.projects.read")]
 public class GetProjectsQuery : IRequest<Result<object>> { }
 
 public class GetProjectsHandler : IRequestHandler<GetProjectsQuery, Result<object>>
@@ -25,6 +27,7 @@ public class GetProjectsHandler : IRequestHandler<GetProjectsQuery, Result<objec
     }
 }
 
+[RequiresPermission("projects.projects.read")]
 public class GetProjectByIdQuery : IRequest<Result<object>>
 {
     public Guid Id { get; set; }
@@ -55,6 +58,7 @@ public class GetProjectByIdHandler : IRequestHandler<GetProjectByIdQuery, Result
     }
 }
 
+[RequiresPermission("projects.tasks.read")]
 public class GetProjectTasksQuery : IRequest<Result<object>> { }
 
 public class GetProjectTasksHandler : IRequestHandler<GetProjectTasksQuery, Result<object>>
@@ -75,6 +79,7 @@ public class GetProjectTasksHandler : IRequestHandler<GetProjectTasksQuery, Resu
     }
 }
 
+[RequiresPermission("projects.tasks.read")]
 public class GetProjectTaskByIdQuery : IRequest<Result<object>>
 {
     public Guid Id { get; set; }

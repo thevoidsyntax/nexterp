@@ -1,3 +1,4 @@
+using ERP.Application.Common.Behaviors;
 using ERP.Application.Common.Interfaces;
 using ERP.Domain.Analytics.Entities;
 using MediatR;
@@ -5,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ERP.Application.Analytics.Commands;
 
+[RequiresPermission("analytics.audit.create")]
 public record CreateAuditLogCommand(
     Guid OrganizationId,
     Guid? UserId,
@@ -22,18 +24,22 @@ public record CreateAuditLogCommand(
 public class CreateAuditLogHandler : IRequestHandler<CreateAuditLogCommand, Guid>
 {
     private readonly IApplicationDbContext _context;
+    private readonly ICurrentUserService _currentUser;
 
-    public CreateAuditLogHandler(IApplicationDbContext context)
+    public CreateAuditLogHandler(IApplicationDbContext context, ICurrentUserService currentUser)
     {
         _context = context;
+        _currentUser = currentUser;
     }
 
     public async Task<Guid> Handle(CreateAuditLogCommand request, CancellationToken cancellationToken)
     {
+        // Organization is taken from the authenticated user's context, not the
+        // request body, so a caller cannot forge audit entries into another org.
         var auditLog = new AuditLog
         {
             Id = Guid.NewGuid(),
-            OrganizationId = request.OrganizationId,
+            OrganizationId = _currentUser.OrganizationId ?? request.OrganizationId,
             UserId = request.UserId,
             Module = request.Module,
             Action = request.Action,
@@ -54,6 +60,7 @@ public class CreateAuditLogHandler : IRequestHandler<CreateAuditLogCommand, Guid
     }
 }
 
+[RequiresPermission("analytics.notifications.create")]
 public record CreateNotificationCommand(
     Guid UserId,
     string Type,

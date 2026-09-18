@@ -2,6 +2,7 @@ using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ERP.Application.Common.Base;
+using ERP.Application.Common.Behaviors;
 using ERP.Application.Common.Interfaces;
 using ERP.Application.Accounting.DTOs;
 using ERP.Domain.Accounting.Entities;
@@ -11,6 +12,7 @@ namespace ERP.Application.Accounting.Commands.JournalEntries;
 /// <summary>
 /// Command to create a new journal entry
 /// </summary>
+[RequiresPermission("accounting.journals.create")]
 public class CreateJournalEntryCommand : ICommand<Guid>
 {
     public DateTime EntryDate { get; set; }

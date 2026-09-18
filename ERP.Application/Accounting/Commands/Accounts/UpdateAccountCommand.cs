@@ -1,6 +1,7 @@
 using FluentValidation;
 using MediatR;
 using ERP.Application.Common.Base;
+using ERP.Application.Common.Behaviors;
 using ERP.Domain.Accounting.Enums;
 
 namespace ERP.Application.Accounting.Commands.Accounts;
@@ -8,6 +9,7 @@ namespace ERP.Application.Accounting.Commands.Accounts;
 /// <summary>
 /// Command to update an existing account
 /// </summary>
+[RequiresPermission("accounting.accounts.update")]
 public class UpdateAccountCommand : ICommand<bool>
 {
     public Guid Id { get; set; }

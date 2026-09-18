@@ -1,10 +1,12 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ERP.Application.Common.Base;
+using ERP.Application.Common.Behaviors;
 using ERP.Application.Common.Interfaces;
 
 namespace ERP.Application.Analytics.Queries;
 
+[RequiresPermission("analytics.audit.read")]
 public class GetAuditLogsQuery : IRequest<Result<object>>
 {
     public Guid? UserId { get; set; }

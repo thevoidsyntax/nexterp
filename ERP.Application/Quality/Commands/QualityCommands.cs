@@ -1,3 +1,4 @@
+using ERP.Application.Common.Behaviors;
 using ERP.Application.Common.Interfaces;
 using ERP.Domain.Quality.Entities;
 using MediatR;
@@ -5,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ERP.Application.Quality.Commands;
 
+[RequiresPermission("quality.inspections.create")]
 public record CreateInspectionCommand(
     string Type,
     Guid? ReferenceId,
@@ -55,6 +57,7 @@ public class CreateInspectionHandler : IRequestHandler<CreateInspectionCommand, 
     }
 }
 
+[RequiresPermission("quality.inspections.update")]
 public record CompleteInspectionCommand(
     Guid Id,
     string Results,
@@ -88,6 +91,7 @@ public class CompleteInspectionHandler : IRequestHandler<CompleteInspectionComma
     }
 }
 
+[RequiresPermission("quality.ncr.create")]
 public record CreateNonConformanceCommand(
     Guid? InspectionId,
     string Severity,
@@ -132,6 +136,7 @@ public class CreateNonConformanceHandler : IRequestHandler<CreateNonConformanceC
     }
 }
 
+[RequiresPermission("quality.ncr.update")]
 public record ResolveNonConformanceCommand(
     Guid Id,
     string? RootCause,
@@ -166,6 +171,7 @@ public class ResolveNonConformanceHandler : IRequestHandler<ResolveNonConformanc
     }
 }
 
+[RequiresPermission("quality.inspections.read")]
 public record GetInspectionsQuery(string? Status, string? Type) : IRequest<List<Inspection>>;
 
 public class GetInspectionsHandler : IRequestHandler<GetInspectionsQuery, List<Inspection>>
@@ -198,6 +204,7 @@ public class GetInspectionsHandler : IRequestHandler<GetInspectionsQuery, List<I
     }
 }
 
+[RequiresPermission("quality.ncr.read")]
 public record GetNonConformancesQuery(string? Status, string? Severity) : IRequest<List<NonConformance>>;
 
 public class GetNonConformancesHandler : IRequestHandler<GetNonConformancesQuery, List<NonConformance>>

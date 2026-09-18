@@ -1,9 +1,11 @@
+using ERP.Domain.Common.Modules;
+
 namespace ERP.Domain.Assets.Entities;
 
 /// <summary>
 /// Asset entity - Fixed assets like equipment, vehicles, furniture
 /// </summary>
-public class Asset
+public class Asset : ITenantEntity
 {
     public Guid Id { get; set; }
     public Guid OrganizationId { get; set; }

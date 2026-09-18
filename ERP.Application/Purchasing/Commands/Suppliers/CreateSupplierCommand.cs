@@ -2,6 +2,7 @@ using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ERP.Application.Common.Base;
+using ERP.Application.Common.Behaviors;
 using ERP.Application.Common.Interfaces;
 using ERP.Domain.Purchasing.Entities;
 
@@ -10,6 +11,7 @@ namespace ERP.Application.Purchasing.Commands.Suppliers;
 /// <summary>
 /// Command to create a new supplier
 /// </summary>
+[RequiresPermission("purchasing.suppliers.create")]
 public class CreateSupplierCommand : ICommand<Guid>
 {
     public string SupplierCode { get; set; } = string.Empty;

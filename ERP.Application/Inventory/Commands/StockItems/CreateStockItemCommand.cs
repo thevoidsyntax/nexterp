@@ -2,6 +2,7 @@ using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ERP.Application.Common.Base;
+using ERP.Application.Common.Behaviors;
 using ERP.Application.Common.Interfaces;
 using ERP.Application.Inventory.DTOs;
 using ERP.Domain.Inventory.Entities;
@@ -12,6 +13,7 @@ namespace ERP.Application.Inventory.Commands.StockItems;
 /// <summary>
 /// Command to create a new stock item
 /// </summary>
+[RequiresPermission("inventory.items.create")]
 public class CreateStockItemCommand : ICommand<Guid>
 {
     public string Name { get; set; } = string.Empty;

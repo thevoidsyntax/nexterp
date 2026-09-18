@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ERP.Application.Common.Base;
+using ERP.Application.Common.Behaviors;
 using ERP.Application.Common.Interfaces;
 
 namespace ERP.Application.Sales.Commands.Customers;
@@ -8,6 +9,7 @@ namespace ERP.Application.Sales.Commands.Customers;
 /// <summary>
 /// Command to delete a customer (soft delete)
 /// </summary>
+[RequiresPermission("sales.customers.delete")]
 public class DeleteCustomerCommand : ICommand<bool>
 {
     public Guid Id { get; set; }

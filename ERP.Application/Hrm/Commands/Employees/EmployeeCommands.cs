@@ -13,6 +13,7 @@ namespace ERP.Application.Hrm.Commands.Employees;
 /// Command to update an existing employee
 /// </summary>
 [RequiresModule("HRM")]
+[RequiresPermission("hrm.employees.update")]
 public class UpdateEmployeeCommand : ICommand
 {
     public Guid EmployeeId { get; set; }
@@ -175,6 +176,7 @@ public class UpdateEmployeeCommandHandler : IRequestHandler<UpdateEmployeeComman
 /// Command to update employee status
 /// </summary>
 [RequiresModule("HRM")]
+[RequiresPermission("hrm.employees.update")]
 public class UpdateEmployeeStatusCommand : ICommand
 {
     public Guid EmployeeId { get; set; }
@@ -259,6 +261,7 @@ public class UpdateEmployeeStatusCommandHandler : IRequestHandler<UpdateEmployee
 /// Command to delete (soft delete) an employee
 /// </summary>
 [RequiresModule("HRM")]
+[RequiresPermission("hrm.employees.delete")]
 public class DeleteEmployeeCommand : ICommand
 {
     public Guid EmployeeId { get; set; }

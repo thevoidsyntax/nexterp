@@ -2,6 +2,7 @@ using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ERP.Application.Common.Base;
+using ERP.Application.Common.Behaviors;
 using ERP.Application.Common.Interfaces;
 using ERP.Application.Purchasing.DTOs;
 using ERP.Domain.Purchasing.Entities;
@@ -11,6 +12,7 @@ namespace ERP.Application.Purchasing.Commands.PurchaseOrders;
 /// <summary>
 /// Command to create a new purchase order
 /// </summary>
+[RequiresPermission("purchasing.orders.create")]
 public class CreatePurchaseOrderCommand : ICommand<Guid>
 {
     public DateTime OrderDate { get; set; }

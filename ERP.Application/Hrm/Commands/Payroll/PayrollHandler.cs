@@ -28,11 +28,13 @@ public class PayrollHandler :
 {
     private readonly IApplicationDbContext _context;
     private readonly PayrollCalculationService _payrollService;
+    private readonly ICurrentUserService _currentUser;
 
-    public PayrollHandler(IApplicationDbContext context, PayrollCalculationService payrollService)
+    public PayrollHandler(IApplicationDbContext context, PayrollCalculationService payrollService, ICurrentUserService currentUser)
     {
         _context = context;
         _payrollService = payrollService;
+        _currentUser = currentUser;
     }
 
     public async Task<PayrollPreviewDto> Handle(CalculatePayrollPreviewCommand request, CancellationToken ct)
@@ -100,9 +102,14 @@ public class PayrollHandler :
 
     public async Task<Guid> Handle(CreatePayrollCommand request, CancellationToken ct)
     {
+        // Organization is taken from the authenticated user's context, not the
+        // request body, so a caller cannot create payroll under another org.
+        var organizationId = _currentUser.OrganizationId
+            ?? throw new InvalidOperationException("User is not associated with an organization");
+
         var employee = await _context.Employees
             .Include(e => e.Department)
-            .FirstOrDefaultAsync(e => e.Id == request.EmployeeId && e.OrganizationId == request.OrganizationId, ct)
+            .FirstOrDefaultAsync(e => e.Id == request.EmployeeId && e.OrganizationId == organizationId, ct)
             ?? throw new InvalidOperationException("Employee not found");
 
         var existingPayroll = await _context.Payrolls
@@ -124,7 +131,7 @@ public class PayrollHandler :
             request.IncludeThr);
 
         var payroll = ERP.Domain.Hrm.Entities.Payroll.Create(
-            request.OrganizationId,
+            organizationId,
             request.EmployeeId,
             request.Year,
             request.Month,
@@ -153,8 +160,13 @@ public class PayrollHandler :
 
     public async Task<BatchPayrollResult> Handle(CreateBatchPayrollCommand request, CancellationToken ct)
     {
+        // Organization is taken from the authenticated user's context, not the
+        // request body, so a caller cannot create payroll under another org.
+        var organizationId = _currentUser.OrganizationId
+            ?? throw new InvalidOperationException("User is not associated with an organization");
+
         var employees = await _context.Employees
-            .Where(e => e.OrganizationId == request.OrganizationId && e.Status == EmployeeStatus.Active)
+            .Where(e => e.OrganizationId == organizationId && e.Status == EmployeeStatus.Active)
             .Where(e => request.DepartmentId == null || e.DepartmentId == request.DepartmentId)
             .ToListAsync(ct);
 
@@ -191,7 +203,7 @@ public class PayrollHandler :
                     request.IncludeThr);
 
                 var payroll = ERP.Domain.Hrm.Entities.Payroll.Create(
-                    request.OrganizationId,
+                    organizationId,
                     employee.Id,
                     request.Year,
                     request.Month,

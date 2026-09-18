@@ -13,6 +13,7 @@ namespace ERP.Application.Hrm.Commands.Leaves;
 /// Command to create or update leave balance for an employee
 /// </summary>
 [RequiresModule("HRM")]
+[RequiresPermission("hrm.leave.manage")]
 public class SetLeaveBalanceCommand : ICommand
 {
     public Guid EmployeeId { get; set; }
@@ -113,6 +114,7 @@ public class SetLeaveBalanceCommandHandler : IRequestHandler<SetLeaveBalanceComm
 /// Command to auto-allocate leave balance based on years of service
 /// </summary>
 [RequiresModule("HRM")]
+[RequiresPermission("hrm.leave.manage")]
 public class AutoAllocateLeaveBalanceCommand : ICommand
 {
     public Guid EmployeeId { get; set; }
@@ -214,6 +216,7 @@ public class AutoAllocateLeaveBalanceCommandHandler : IRequestHandler<AutoAlloca
 /// Command to cancel a leave request
 /// </summary>
 [RequiresModule("HRM")]
+[RequiresPermission("hrm.leave.request")]
 public class CancelLeaveRequestCommand : ICommand
 {
     public Guid LeaveRequestId { get; set; }

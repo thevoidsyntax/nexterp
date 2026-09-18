@@ -1,11 +1,13 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ERP.Application.Common.Base;
+using ERP.Application.Common.Behaviors;
 using ERP.Application.Common.Interfaces;
 using ERP.Domain.Sales.Entities;
 
 namespace ERP.Application.Sales.Queries;
 
+[RequiresPermission("sales.customers.read")]
 public class GetCustomersQuery : IRequest<Result<object>> { }
 
 public class GetCustomersHandler : IRequestHandler<GetCustomersQuery, Result<object>>
@@ -26,6 +28,7 @@ public class GetCustomersHandler : IRequestHandler<GetCustomersQuery, Result<obj
     }
 }
 
+[RequiresPermission("sales.customers.read")]
 public class GetCustomerByIdQuery : IRequest<Result<object>>
 {
     public Guid Id { get; set; }
@@ -56,6 +59,7 @@ public class GetCustomerByIdHandler : IRequestHandler<GetCustomerByIdQuery, Resu
     }
 }
 
+[RequiresPermission("sales.orders.read")]
 public class GetSalesOrdersQuery : IRequest<Result<object>> { }
 
 public class GetSalesOrdersHandler : IRequestHandler<GetSalesOrdersQuery, Result<object>>
@@ -76,6 +80,7 @@ public class GetSalesOrdersHandler : IRequestHandler<GetSalesOrdersQuery, Result
     }
 }
 
+[RequiresPermission("sales.orders.read")]
 public class GetSalesOrderByIdQuery : IRequest<Result<object>>
 {
     public Guid Id { get; set; }

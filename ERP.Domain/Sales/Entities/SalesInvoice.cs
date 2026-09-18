@@ -1,11 +1,12 @@
 using ERP.Domain.Common;
+using ERP.Domain.Common.Modules;
 
 namespace ERP.Domain.Sales.Entities;
 
 /// <summary>
 /// Sales Invoice header
 /// </summary>
-public class SalesInvoice : BaseEntity
+public class SalesInvoice : BaseEntity, ITenantEntity
 {
     public Guid OrganizationId { get; private set; }
     public string InvoiceNumber { get; private set; } = string.Empty;

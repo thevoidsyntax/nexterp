@@ -28,16 +28,14 @@ namespace ERP.Infrastructure.Persistence;
 public class ERPDbContext : DbContext, IApplicationDbContext
 {
 	private readonly ITenantContext? _tenantContext;
+	private readonly Guid? _currentTenantId;
 
-	// Constructor for normal DI
-	public ERPDbContext(DbContextOptions<ERPDbContext> options) : base(options)
-	{
-	}
-
-	// Constructor for design-time (migrations)
-	public ERPDbContext(DbContextOptions<ERPDbContext> options, ITenantContext? tenantContext) : base(options)
+	// Constructor for normal DI (ITenantContext is resolved from the request scope);
+	// tenantContext is null for design-time/migration tooling, which passes it explicitly.
+	public ERPDbContext(DbContextOptions<ERPDbContext> options, ITenantContext? tenantContext = null) : base(options)
 	{
 		_tenantContext = tenantContext;
+		_currentTenantId = tenantContext?.HasTenant == true ? tenantContext.TenantId : null;
 	}
 
 	// Base entities
@@ -132,8 +130,32 @@ public class ERPDbContext : DbContext, IApplicationDbContext
 	private void ApplyGlobalFilters(ModelBuilder modelBuilder)
 	{
 		// Soft delete filters applied per entity in configurations
-		// Note: Tenant filter (OrganizationId) is handled by:
+		// Tenant filter (OrganizationId) is handled by:
 		//   1. TenantEntityInterceptor: auto-sets OrganizationId on new entities
-		//   2. Explicit OrganizationId filters in each repository/service query
+		//   2. This global query filter: restricts every ITenantEntity query to the
+		//      current request's organization, closing cross-tenant IDOR gaps left by
+		//      handlers that fetch by Id without an explicit OrganizationId check.
+		//      With no tenant in scope (e.g. unauthenticated/system contexts), the
+		//      filter matches nothing rather than leaking every organization's data.
+		var setTenantFilterMethod = typeof(ERPDbContext)
+			.GetMethod(nameof(SetTenantQueryFilter), BindingFlags.NonPublic | BindingFlags.Instance)!;
+
+		var tenantEntityTypes = modelBuilder.Model.GetEntityTypes()
+			.Where(et => typeof(ITenantEntity).IsAssignableFrom(et.ClrType))
+			.Select(et => et.ClrType)
+			.ToList();
+
+		foreach (var clrType in tenantEntityTypes)
+		{
+			setTenantFilterMethod
+				.MakeGenericMethod(clrType)
+				.Invoke(this, new object[] { modelBuilder });
+		}
+	}
+
+	private void SetTenantQueryFilter<TEntity>(ModelBuilder modelBuilder)
+		where TEntity : class, ITenantEntity
+	{
+		modelBuilder.Entity<TEntity>().HasQueryFilter(e => e.OrganizationId == _currentTenantId);
 	}
 }

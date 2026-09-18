@@ -1,4 +1,5 @@
 using ERP.Domain.Common;
+using ERP.Domain.Common.Modules;
 using ERP.Domain.Accounting.Enums;
 
 namespace ERP.Domain.Sales.Entities;
@@ -6,7 +7,7 @@ namespace ERP.Domain.Sales.Entities;
 /// <summary>
 /// Customer entity
 /// </summary>
-public class Customer : BaseEntity
+public class Customer : BaseEntity, ITenantEntity
 {
     public Guid OrganizationId { get; private set; }
     public string CustomerCode { get; private set; } = string.Empty;
@@ -143,7 +144,7 @@ public enum CustomerType
 /// <summary>
 /// Sales Order header
 /// </summary>
-public class SalesOrder : BaseEntity
+public class SalesOrder : BaseEntity, ITenantEntity
 {
     public Guid OrganizationId { get; private set; }
     public string OrderNumber { get; private set; } = string.Empty;

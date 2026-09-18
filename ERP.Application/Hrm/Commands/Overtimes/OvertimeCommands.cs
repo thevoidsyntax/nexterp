@@ -13,6 +13,7 @@ namespace ERP.Application.Hrm.Commands.Overtimes;
 /// Command to create an overtime request
 /// </summary>
 [RequiresModule("HRM")]
+[RequiresPermission("hrm.overtime.request")]
 public class CreateOvertimeRequestCommand : ICommand<Guid>
 {
     public Guid EmployeeId { get; set; }
@@ -130,6 +131,7 @@ public class CreateOvertimeRequestCommandHandler : IRequestHandler<CreateOvertim
 /// Command to approve or reject overtime request
 /// </summary>
 [RequiresModule("HRM")]
+[RequiresPermission("hrm.overtime.approve")]
 public class ApproveOvertimeRequestCommand : ICommand
 {
     public Guid OvertimeRequestId { get; set; }
@@ -202,6 +204,7 @@ public class ApproveOvertimeRequestCommandHandler : IRequestHandler<ApproveOvert
 /// Command to cancel an overtime request
 /// </summary>
 [RequiresModule("HRM")]
+[RequiresPermission("hrm.overtime.request")]
 public class CancelOvertimeRequestCommand : ICommand
 {
     public Guid OvertimeRequestId { get; set; }

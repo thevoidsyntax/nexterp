@@ -1,6 +1,7 @@
 using FluentValidation;
 using MediatR;
 using ERP.Application.Common.Base;
+using ERP.Application.Common.Behaviors;
 using ERP.Application.Common.Interfaces;
 using ERP.Domain.Accounting.Enums;
 
@@ -9,6 +10,7 @@ namespace ERP.Application.Accounting.Commands.Accounts;
 /// <summary>
 /// Command to create a new account
 /// </summary>
+[RequiresPermission("accounting.accounts.create")]
 public class CreateAccountCommand : ICommand<Guid>
 {
     public string AccountCode { get; set; } = string.Empty;

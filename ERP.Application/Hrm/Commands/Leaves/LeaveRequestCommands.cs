@@ -14,6 +14,7 @@ namespace ERP.Application.Hrm.Commands.Leaves;
 /// Command to create a leave request
 /// </summary>
 [RequiresModule("HRM")]
+[RequiresPermission("hrm.leave.request")]
 public class CreateLeaveRequestCommand : ICommand<Guid>
 {
     public Guid EmployeeId { get; set; }
@@ -131,6 +132,7 @@ public class CreateLeaveRequestCommandHandler : IRequestHandler<CreateLeaveReque
 /// Command to approve/reject leave request
 /// </summary>
 [RequiresModule("HRM")]
+[RequiresPermission("hrm.leave.approve")]
 public class ApproveLeaveRequestCommand : ICommand
 {
     public Guid LeaveRequestId { get; set; }

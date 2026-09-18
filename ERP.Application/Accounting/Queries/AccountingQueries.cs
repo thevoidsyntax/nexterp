@@ -1,10 +1,12 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ERP.Application.Common.Base;
+using ERP.Application.Common.Behaviors;
 using ERP.Application.Common.Interfaces;
 
 namespace ERP.Application.Accounting.Queries;
 
+[RequiresPermission("accounting.accounts.read")]
 public class GetAccountsQuery : IRequest<Result<object>> { }
 
 public class GetAccountsHandler : IRequestHandler<GetAccountsQuery, Result<object>>
@@ -24,6 +26,7 @@ public class GetAccountsHandler : IRequestHandler<GetAccountsQuery, Result<objec
     }
 }
 
+[RequiresPermission("accounting.journals.read")]
 public class GetJournalEntriesQuery : IRequest<Result<object>> { }
 
 public class GetJournalEntriesHandler : IRequestHandler<GetJournalEntriesQuery, Result<object>>
@@ -44,6 +47,7 @@ public class GetJournalEntriesHandler : IRequestHandler<GetJournalEntriesQuery, 
     }
 }
 
+[RequiresPermission("accounting.journals.read")]
 public class GetJournalEntryByIdQuery : IRequest<Result<object>>
 {
     public Guid Id { get; set; }

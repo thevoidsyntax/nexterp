@@ -1,4 +1,5 @@
 using ERP.Domain.Common;
+using ERP.Domain.Common.Modules;
 using ERP.Domain.Hrm.Enums;
 
 namespace ERP.Domain.Hrm.Entities;
@@ -6,7 +7,7 @@ namespace ERP.Domain.Hrm.Entities;
 /// <summary>
 /// Attendance record entity
 /// </summary>
-public class Attendance : BaseEntity
+public class Attendance : BaseEntity, ITenantEntity
 {
     public Guid OrganizationId { get; private set; }
     public Guid EmployeeId { get; private set; }
@@ -128,7 +129,7 @@ public class Attendance : BaseEntity
 /// <summary>
 /// Leave Request entity
 /// </summary>
-public class LeaveRequest : BaseEntity
+public class LeaveRequest : BaseEntity, ITenantEntity
 {
     public Guid OrganizationId { get; private set; }
     public Guid EmployeeId { get; private set; }
@@ -239,7 +240,7 @@ public class LeaveRequest : BaseEntity
 /// <summary>
 /// Leave Balance entity
 /// </summary>
-public class LeaveBalance : BaseEntity
+public class LeaveBalance : BaseEntity, ITenantEntity
 {
     public Guid OrganizationId { get; private set; }
     public Guid EmployeeId { get; private set; }

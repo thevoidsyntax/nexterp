@@ -1,11 +1,12 @@
 using ERP.Domain.Common;
+using ERP.Domain.Common.Modules;
 
 namespace ERP.Domain.Inventory.Entities;
 
 /// <summary>
 /// Warehouse entity representing a storage location
 /// </summary>
-public class Warehouse : BaseEntity
+public class Warehouse : BaseEntity, ITenantEntity
 {
     public Guid OrganizationId { get; private set; }
     public string Name { get; private set; } = string.Empty;

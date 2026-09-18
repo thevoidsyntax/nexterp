@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ERP.Application.Common.Base;
+using ERP.Application.Common.Behaviors;
 using ERP.Application.Common.Interfaces;
 using ERP.Domain.Sales.Entities;
 
@@ -9,6 +10,7 @@ namespace ERP.Application.Sales.Commands.SalesOrders;
 /// <summary>
 /// Command to approve a submitted sales order
 /// </summary>
+[RequiresPermission("sales.orders.approve")]
 public class ApproveSalesOrderCommand : ICommand<bool>
 {
     public Guid Id { get; set; }

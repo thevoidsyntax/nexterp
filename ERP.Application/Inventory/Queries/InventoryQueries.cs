@@ -1,11 +1,13 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ERP.Application.Common.Base;
+using ERP.Application.Common.Behaviors;
 using ERP.Application.Common.Interfaces;
 using ERP.Domain.Inventory.Entities;
 
 namespace ERP.Application.Inventory.Queries;
 
+[RequiresPermission("inventory.warehouses.read")]
 public class GetWarehousesQuery : IRequest<Result<object>> { }
 
 public class GetWarehousesHandler : IRequestHandler<GetWarehousesQuery, Result<object>>
@@ -32,6 +34,7 @@ public class GetWarehousesHandler : IRequestHandler<GetWarehousesQuery, Result<o
     }
 }
 
+[RequiresPermission("inventory.warehouses.read")]
 public class GetWarehouseByIdQuery : IRequest<Result<object>>
 {
     public Guid Id { get; set; }
@@ -64,6 +67,7 @@ public class GetWarehouseByIdHandler : IRequestHandler<GetWarehouseByIdQuery, Re
     }
 }
 
+[RequiresPermission("inventory.items.read")]
 public class GetStockItemsQuery : IRequest<Result<object>> { }
 
 public class GetStockItemsHandler : IRequestHandler<GetStockItemsQuery, Result<object>>
@@ -90,6 +94,7 @@ public class GetStockItemsHandler : IRequestHandler<GetStockItemsQuery, Result<o
     }
 }
 
+[RequiresPermission("inventory.items.read")]
 public class GetStockItemByIdQuery : IRequest<Result<object>>
 {
     public Guid Id { get; set; }

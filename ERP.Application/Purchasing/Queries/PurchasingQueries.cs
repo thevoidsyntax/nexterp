@@ -1,10 +1,12 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ERP.Application.Common.Base;
+using ERP.Application.Common.Behaviors;
 using ERP.Application.Common.Interfaces;
 
 namespace ERP.Application.Purchasing.Queries;
 
+[RequiresPermission("purchasing.suppliers.read")]
 public class GetSuppliersQuery : IRequest<Result<object>> { }
 
 public class GetSuppliersHandler : IRequestHandler<GetSuppliersQuery, Result<object>>
@@ -25,6 +27,7 @@ public class GetSuppliersHandler : IRequestHandler<GetSuppliersQuery, Result<obj
     }
 }
 
+[RequiresPermission("purchasing.suppliers.read")]
 public class GetSupplierByIdQuery : IRequest<Result<object>>
 {
     public Guid Id { get; set; }
@@ -55,6 +58,7 @@ public class GetSupplierByIdHandler : IRequestHandler<GetSupplierByIdQuery, Resu
     }
 }
 
+[RequiresPermission("purchasing.orders.read")]
 public class GetPurchaseOrdersQuery : IRequest<Result<object>> { }
 
 public class GetPurchaseOrdersHandler : IRequestHandler<GetPurchaseOrdersQuery, Result<object>>
@@ -75,6 +79,7 @@ public class GetPurchaseOrdersHandler : IRequestHandler<GetPurchaseOrdersQuery, 
     }
 }
 
+[RequiresPermission("purchasing.orders.read")]
 public class GetPurchaseOrderByIdQuery : IRequest<Result<object>>
 {
     public Guid Id { get; set; }

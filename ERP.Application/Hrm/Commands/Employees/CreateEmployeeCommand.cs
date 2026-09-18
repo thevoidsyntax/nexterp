@@ -14,6 +14,7 @@ namespace ERP.Application.Hrm.Commands.Employees;
 /// Command to create a new employee
 /// </summary>
 [RequiresModule("HRM")]
+[RequiresPermission("hrm.employees.create")]
 public class CreateEmployeeCommand : ICommand<Guid>
 {
     public Guid UserId { get; set; }
@@ -87,17 +88,26 @@ public class CreateEmployeeCommandValidator : AbstractValidator<CreateEmployeeCo
 public class CreateEmployeeCommandHandler : IRequestHandler<CreateEmployeeCommand, Result<Guid>>
 {
     private readonly IApplicationDbContext _context;
+    private readonly ICurrentUserService _currentUser;
 
-    public CreateEmployeeCommandHandler(IApplicationDbContext context)
+    public CreateEmployeeCommandHandler(IApplicationDbContext context, ICurrentUserService currentUser)
     {
         _context = context;
+        _currentUser = currentUser;
     }
 
     public async Task<Result<Guid>> Handle(CreateEmployeeCommand request, CancellationToken cancellationToken)
     {
+        // Organization is taken from the authenticated user's context, not the
+        // request body, so a caller cannot create employees under another org.
+        if (_currentUser.OrganizationId == null)
+            return Result<Guid>.Failure("User is not associated with an organization");
+
+        var organizationId = _currentUser.OrganizationId.Value;
+
         // Check if employee number already exists
         var existingNumber = await _context.Set<Employee>()
-            .AnyAsync(e => e.OrganizationId == request.OrganizationId &&
+            .AnyAsync(e => e.OrganizationId == organizationId &&
                           e.EmployeeNumber == request.EmployeeNumber.ToUpperInvariant() &&
                           !e.IsDeleted, cancellationToken);
 
@@ -130,7 +140,7 @@ public class CreateEmployeeCommandHandler : IRequestHandler<CreateEmployeeComman
 
         // Create employee
         var employee = Employee.Create(
-            request.OrganizationId,
+            organizationId,
             request.UserId,
             request.EmployeeNumber,
             request.FirstName,

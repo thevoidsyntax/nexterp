@@ -1,10 +1,12 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ERP.Application.Common.Base;
+using ERP.Application.Common.Behaviors;
 using ERP.Application.Common.Interfaces;
 
 namespace ERP.Application.Quality.Queries;
 
+[RequiresPermission("quality.inspections.read")]
 public class GetInspectionsQuery : IRequest<Result<object>>
 {
     public Guid? OrganizationId { get; set; }
@@ -24,6 +26,7 @@ public class GetInspectionsHandler : IRequestHandler<GetInspectionsQuery, Result
     }
 }
 
+[RequiresPermission("quality.ncr.read")]
 public class GetNonConformancesQuery : IRequest<Result<object>> { }
 
 public class GetNonConformancesHandler : IRequestHandler<GetNonConformancesQuery, Result<object>>

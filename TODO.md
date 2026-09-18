@@ -690,6 +690,17 @@ dbca178 - feat: implement High to Low features
 
 ---
 
+## 🔐 Security Hardening: Permission System Rollout + Cross-Tenant Fixes
+
+- [x] `[RequiresPermission("module.resource.action")]` rolled out to commands/queries across all 9 modules (Accounting, Analytics, Assets, Hrm, Inventory, Projects, Purchasing, Quality, Sales) — previously only `Common/Commands/WorkflowCommands.cs` enforced permissions.
+- [x] Full permission catalog seeded in `DatabaseSeeder.cs` (`ModulePermissions` table) matching every attribute above.
+- [x] **Cross-tenant IDOR fix (read side):** added a global EF Core query filter (`ERPDbContext.ApplyGlobalFilters`) that scopes every query against an `ITenantEntity` to the caller's `OrganizationId`. Closes gaps in handlers that fetched by Id (or listed) without an explicit org check (e.g. `CompleteInspectionCommand`, `UpdateAssetCommand`, `GetSalesOrdersQuery`, `GetAccountsQuery`, and others across Sales/Purchasing/Accounting/Quality/Assets/Projects/Analytics). Wires up the previously-unused `ITenantContext`/`TenantContext` scaffolding.
+- [x] **Cross-tenant write fix:** several create handlers trusted a client-supplied `OrganizationId` in the request body instead of the authenticated user's session (`CreateProjectCommand`, `CreateProjectTaskCommand`, `CreateDepartmentCommand`, `CreatePositionCommand`, `CreateEmployeeCommand`, `CreatePayrollCommand`, `CreateBatchPayrollCommand`, `CreateAuditLogCommand`) — a caller could create/forge records under another org. Fixed to derive org from `ICurrentUserService`/the parent entity.
+- [ ] Not covered here (flagged for follow-up): `Base/Commands/Roles/CreateRoleCommand.cs`, `Base/Commands/Users/CreateUserCommandHandler.cs` still trust a client-supplied `OrganizationId`; `User`/`Role` were intentionally excluded from the global tenant filter (would break login, which looks up users before an org is known).
+- [ ] Could not run `dotnet build`/tests — no .NET SDK in this sandbox and outbound install was blocked by the environment's egress policy. Changes were reviewed manually (imports, factory-method signatures, constructor DI, brace balance) but not compiler-verified — **run a full build before deploying.**
+
+---
+
 ## 📁 KEY FILES
 
 | Feature | File |

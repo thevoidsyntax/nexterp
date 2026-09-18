@@ -1,4 +1,5 @@
 using ERP.Domain.Common;
+using ERP.Domain.Common.Modules;
 using ERP.Domain.Inventory.Enums;
 
 namespace ERP.Domain.Inventory.Entities;
@@ -6,7 +7,7 @@ namespace ERP.Domain.Inventory.Entities;
 /// <summary>
 /// Unit of Measure entity
 /// </summary>
-public class UnitOfMeasure : BaseEntity
+public class UnitOfMeasure : BaseEntity, ITenantEntity
 {
     public Guid OrganizationId { get; private set; }
     public string Name { get; private set; } = string.Empty;
@@ -64,7 +65,7 @@ public class UnitOfMeasure : BaseEntity
 /// <summary>
 /// Stock Item entity representing an inventory product
 /// </summary>
-public class StockItem : BaseEntity
+public class StockItem : BaseEntity, ITenantEntity
 {
     public Guid OrganizationId { get; private set; }
     public string Name { get; private set; } = string.Empty;

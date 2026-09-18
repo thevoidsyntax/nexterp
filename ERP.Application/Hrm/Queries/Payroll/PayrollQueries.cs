@@ -1,4 +1,5 @@
 using ERP.Domain.Hrm.Enums;
+using ERP.Application.Common.Behaviors;
 using ERP.Application.Common.Models;
 using ERP.Application.Hrm.DTOs;
 using MediatR;
@@ -8,6 +9,7 @@ namespace ERP.Application.Hrm.Queries.Payroll;
 /// <summary>
 /// Get paginated payroll records.
 /// </summary>
+[RequiresPermission("hrm.payroll.view")]
 public record GetPayrollListQuery(
     Guid OrganizationId,
     int? Year = null,
@@ -21,6 +23,7 @@ public record GetPayrollListQuery(
 /// <summary>
 /// Get payroll by ID.
 /// </summary>
+[RequiresPermission("hrm.payroll.view")]
 public record GetPayrollByIdQuery(
     Guid OrganizationId,
     Guid PayrollId
@@ -29,6 +32,7 @@ public record GetPayrollByIdQuery(
 /// <summary>
 /// Get payroll summary for a period.
 /// </summary>
+[RequiresPermission("hrm.payroll.view")]
 public record GetPayrollSummaryQuery(
     Guid OrganizationId,
     int Year,
@@ -38,6 +42,7 @@ public record GetPayrollSummaryQuery(
 /// <summary>
 /// Get payslip for employee.
 /// </summary>
+[RequiresPermission("hrm.payroll.view")]
 public record GetPayslipQuery(
     Guid OrganizationId,
     Guid PayrollId
@@ -46,6 +51,7 @@ public record GetPayslipQuery(
 /// <summary>
 /// Get employee's payroll history.
 /// </summary>
+[RequiresPermission("hrm.payroll.view")]
 public record GetEmployeePayrollHistoryQuery(
     Guid OrganizationId,
     Guid EmployeeId,

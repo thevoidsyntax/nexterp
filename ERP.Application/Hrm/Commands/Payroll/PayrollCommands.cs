@@ -1,5 +1,6 @@
 using ERP.Domain.Hrm.Enums;
 using ERP.Domain.Hrm.Services;
+using ERP.Application.Common.Behaviors;
 using ERP.Application.Hrm.DTOs;
 using ERP.Application.Common.Models;
 using FluentValidation;
@@ -10,6 +11,7 @@ namespace ERP.Application.Hrm.Commands.Payroll;
 /// <summary>
 /// Calculate payroll preview for an employee.
 /// </summary>
+[RequiresPermission("hrm.payroll.view")]
 public record CalculatePayrollPreviewCommand(
     Guid OrganizationId,
     Guid EmployeeId,
@@ -22,6 +24,7 @@ public record CalculatePayrollPreviewCommand(
 /// <summary>
 /// Create payroll for a single employee.
 /// </summary>
+[RequiresPermission("hrm.payroll.manage")]
 public record CreatePayrollCommand(
     Guid OrganizationId,
     Guid EmployeeId,
@@ -38,6 +41,7 @@ public record CreatePayrollCommand(
 /// <summary>
 /// Create payroll batch for all employees in a department.
 /// </summary>
+[RequiresPermission("hrm.payroll.manage")]
 public record CreateBatchPayrollCommand(
     Guid OrganizationId,
     Guid? DepartmentId,
@@ -52,6 +56,7 @@ public record CreateBatchPayrollCommand(
 /// <summary>
 /// Approve payroll for payment.
 /// </summary>
+[RequiresPermission("hrm.payroll.manage")]
 public record ApprovePayrollCommand(
     Guid OrganizationId,
     Guid PayrollId,
@@ -61,6 +66,7 @@ public record ApprovePayrollCommand(
 /// <summary>
 /// Mark payroll as paid.
 /// </summary>
+[RequiresPermission("hrm.payroll.manage")]
 public record MarkPayrollPaidCommand(
     Guid OrganizationId,
     Guid PayrollId,
@@ -71,6 +77,7 @@ public record MarkPayrollPaidCommand(
 /// <summary>
 /// Delete payroll draft.
 /// </summary>
+[RequiresPermission("hrm.payroll.manage")]
 public record DeletePayrollCommand(
     Guid OrganizationId,
     Guid PayrollId,

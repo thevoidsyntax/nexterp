@@ -1,11 +1,12 @@
 using ERP.Domain.Common;
+using ERP.Domain.Common.Modules;
 
 namespace ERP.Domain.Purchasing.Entities;
 
 /// <summary>
 /// Supplier entity
 /// </summary>
-public class Supplier : BaseEntity
+public class Supplier : BaseEntity, ITenantEntity
 {
     public Guid OrganizationId { get; private set; }
     public string SupplierCode { get; private set; } = string.Empty;
@@ -141,7 +142,7 @@ public enum SupplierType
 /// <summary>
 /// Purchase Order header
 /// </summary>
-public class PurchaseOrder : BaseEntity
+public class PurchaseOrder : BaseEntity, ITenantEntity
 {
     public Guid OrganizationId { get; private set; }
     public string OrderNumber { get; private set; } = string.Empty;

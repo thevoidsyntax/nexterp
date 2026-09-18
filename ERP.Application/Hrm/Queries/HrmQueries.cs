@@ -8,6 +8,7 @@ using ERP.Domain.Hrm.Entities;
 namespace ERP.Application.Hrm.Queries;
 
 [RequiresModule("HRM")]
+[RequiresPermission("hrm.employees.read")]
 public class GetEmployeesQuery : IRequest<Result<object>> { }
 
 public class GetEmployeesHandler : IRequestHandler<GetEmployeesQuery, Result<object>>
@@ -29,6 +30,7 @@ public class GetEmployeesHandler : IRequestHandler<GetEmployeesQuery, Result<obj
 }
 
 [RequiresModule("HRM")]
+[RequiresPermission("hrm.employees.read")]
 public class GetEmployeeByIdQuery : IRequest<Result<object>>
 {
     public Guid Id { get; set; }
@@ -63,6 +65,7 @@ public class GetEmployeeByIdHandler : IRequestHandler<GetEmployeeByIdQuery, Resu
 }
 
 [RequiresModule("HRM")]
+[RequiresPermission("hrm.attendance.read")]
 public class GetAttendancesQuery : IRequest<Result<object>> { }
 
 public class GetAttendancesHandler : IRequestHandler<GetAttendancesQuery, Result<object>>
@@ -84,6 +87,7 @@ public class GetAttendancesHandler : IRequestHandler<GetAttendancesQuery, Result
 }
 
 [RequiresModule("HRM")]
+[RequiresPermission("hrm.attendance.read")]
 public class GetAttendanceByIdQuery : IRequest<Result<object>>
 {
     public Guid Id { get; set; }
@@ -115,6 +119,7 @@ public class GetAttendanceByIdHandler : IRequestHandler<GetAttendanceByIdQuery, 
 }
 
 [RequiresModule("HRM")]
+[RequiresPermission("hrm.leave.read")]
 public class GetLeaveRequestsQuery : IRequest<Result<object>> { }
 
 public class GetLeaveRequestsHandler : IRequestHandler<GetLeaveRequestsQuery, Result<object>>
@@ -136,6 +141,7 @@ public class GetLeaveRequestsHandler : IRequestHandler<GetLeaveRequestsQuery, Re
 }
 
 [RequiresModule("HRM")]
+[RequiresPermission("hrm.leave.read")]
 public class GetLeaveRequestByIdQuery : IRequest<Result<object>>
 {
     public Guid Id { get; set; }

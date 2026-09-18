@@ -12,6 +12,7 @@ namespace ERP.Application.Hrm.Commands.Departments;
 /// Command to create a new department
 /// </summary>
 [RequiresModule("HRM")]
+[RequiresPermission("hrm.departments.create")]
 public class CreateDepartmentCommand : ICommand<Guid>
 {
     public Guid OrganizationId { get; set; }
@@ -47,20 +48,29 @@ public class CreateDepartmentCommandValidator : AbstractValidator<CreateDepartme
 public class CreateDepartmentCommandHandler : IRequestHandler<CreateDepartmentCommand, Result<Guid>>
 {
     private readonly IApplicationDbContext _context;
+    private readonly ICurrentUserService _currentUser;
 
-    public CreateDepartmentCommandHandler(IApplicationDbContext context)
+    public CreateDepartmentCommandHandler(IApplicationDbContext context, ICurrentUserService currentUser)
     {
         _context = context;
+        _currentUser = currentUser;
     }
 
     public async Task<Result<Guid>> Handle(CreateDepartmentCommand request, CancellationToken cancellationToken)
     {
+        // Organization is taken from the authenticated user's context, not the
+        // request body, so a caller cannot create departments under another org.
+        if (_currentUser.OrganizationId == null)
+            return Result<Guid>.Failure("User is not associated with an organization");
+
+        var organizationId = _currentUser.OrganizationId.Value;
+
         // Check if code already exists
         if (!string.IsNullOrWhiteSpace(request.Code))
         {
             var existingCode = await _context.Set<Department>()
                 .AnyAsync(d =>
-                    d.OrganizationId == request.OrganizationId &&
+                    d.OrganizationId == organizationId &&
                     d.Code == request.Code.ToUpperInvariant() &&
                     !d.IsDeleted, cancellationToken);
 
@@ -79,7 +89,7 @@ public class CreateDepartmentCommandHandler : IRequestHandler<CreateDepartmentCo
         }
 
         var department = Department.Create(
-            request.OrganizationId,
+            organizationId,
             request.Name,
             request.Code,
             request.Description,
@@ -96,6 +106,7 @@ public class CreateDepartmentCommandHandler : IRequestHandler<CreateDepartmentCo
 /// Command to update a department
 /// </summary>
 [RequiresModule("HRM")]
+[RequiresPermission("hrm.departments.update")]
 public class UpdateDepartmentCommand : ICommand
 {
     public Guid DepartmentId { get; set; }
@@ -190,6 +201,7 @@ public class UpdateDepartmentCommandHandler : IRequestHandler<UpdateDepartmentCo
 /// Command to create a new position
 /// </summary>
 [RequiresModule("HRM")]
+[RequiresPermission("hrm.positions.create")]
 public class CreatePositionCommand : ICommand<Guid>
 {
     public Guid OrganizationId { get; set; }
@@ -246,15 +258,16 @@ public class CreatePositionCommandHandler : IRequestHandler<CreatePositionComman
 
     public async Task<Result<Guid>> Handle(CreatePositionCommand request, CancellationToken cancellationToken)
     {
-        // Check if department exists
-        var departmentExists = await _context.Set<Department>()
-            .AnyAsync(d => d.Id == request.DepartmentId && !d.IsDeleted, cancellationToken);
+        // Check if department exists (tenant-scoped by the global query filter)
+        var department = await _context.Set<Department>()
+            .FirstOrDefaultAsync(d => d.Id == request.DepartmentId && !d.IsDeleted, cancellationToken);
 
-        if (!departmentExists)
+        if (department == null)
             return Result<Guid>.Failure("Department not found");
 
+        // Position's organization is taken from its department, not the request body.
         var position = Position.Create(
-            request.OrganizationId,
+            department.OrganizationId,
             request.DepartmentId,
             request.Title,
             request.Description,
@@ -273,6 +286,7 @@ public class CreatePositionCommandHandler : IRequestHandler<CreatePositionComman
 /// Command to update a position
 /// </summary>
 [RequiresModule("HRM")]
+[RequiresPermission("hrm.positions.update")]
 public class UpdatePositionCommand : ICommand
 {
     public Guid PositionId { get; set; }

@@ -2,6 +2,7 @@ using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ERP.Application.Common.Base;
+using ERP.Application.Common.Behaviors;
 using ERP.Application.Common.Interfaces;
 using ERP.Domain.Sales.Entities;
 
@@ -10,6 +11,7 @@ namespace ERP.Application.Sales.Commands.Customers;
 /// <summary>
 /// Command to update an existing customer
 /// </summary>
+[RequiresPermission("sales.customers.update")]
 public class UpdateCustomerCommand : ICommand<bool>
 {
     public Guid Id { get; set; }

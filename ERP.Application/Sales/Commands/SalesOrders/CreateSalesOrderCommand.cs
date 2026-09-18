@@ -2,6 +2,7 @@ using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ERP.Application.Common.Base;
+using ERP.Application.Common.Behaviors;
 using ERP.Application.Common.Interfaces;
 using ERP.Application.Sales.DTOs;
 using ERP.Domain.Sales.Entities;
@@ -11,6 +12,7 @@ namespace ERP.Application.Sales.Commands.SalesOrders;
 /// <summary>
 /// Command to create a new sales order
 /// </summary>
+[RequiresPermission("sales.orders.create")]
 public class CreateSalesOrderCommand : ICommand<Guid>
 {
     public DateTime OrderDate { get; set; }

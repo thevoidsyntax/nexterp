@@ -1,4 +1,5 @@
 using ERP.Domain.Common;
+using ERP.Domain.Common.Modules;
 using ERP.Domain.Projects.Enums;
 
 namespace ERP.Domain.Projects.Entities;
@@ -6,7 +7,7 @@ namespace ERP.Domain.Projects.Entities;
 /// <summary>
 /// Project entity
 /// </summary>
-public class Project : BaseEntity
+public class Project : BaseEntity, ITenantEntity
 {
     public Guid OrganizationId { get; private set; }
     public string Name { get; private set; } = string.Empty;
@@ -139,7 +140,7 @@ public class Project : BaseEntity
 /// <summary>
 /// Project task entity
 /// </summary>
-public class ProjectTask : BaseEntity
+public class ProjectTask : BaseEntity, ITenantEntity
 {
     public Guid OrganizationId { get; private set; }
     public Guid ProjectId { get; private set; }

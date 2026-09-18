@@ -2,6 +2,7 @@ using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ERP.Application.Common.Base;
+using ERP.Application.Common.Behaviors;
 using ERP.Application.Common.Interfaces;
 using ERP.Application.Sales.DTOs;
 using ERP.Domain.Sales.Entities;
@@ -11,6 +12,7 @@ namespace ERP.Application.Sales.Commands.Customers;
 /// <summary>
 /// Command to create a new customer
 /// </summary>
+[RequiresPermission("sales.customers.create")]
 public class CreateCustomerCommand : ICommand<Guid>
 {
     public string CustomerCode { get; set; } = string.Empty;

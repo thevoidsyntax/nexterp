@@ -1,4 +1,5 @@
 using ERP.Domain.Common;
+using ERP.Domain.Common.Modules;
 using ERP.Domain.Hrm.Enums;
 
 namespace ERP.Domain.Hrm.Entities;
@@ -6,7 +7,7 @@ namespace ERP.Domain.Hrm.Entities;
 /// <summary>
 /// Employee entity - extends User with HR data
 /// </summary>
-public class Employee : BaseEntity
+public class Employee : BaseEntity, ITenantEntity
 {
 	public Guid OrganizationId { get; private set; }
 	public string EmployeeNumber { get; private set; } = string.Empty;

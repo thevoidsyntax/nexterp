@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ERP.Application.Common.Base;
+using ERP.Application.Common.Behaviors;
 using ERP.Application.Common.Interfaces;
 
 namespace ERP.Application.Purchasing.Commands.Suppliers;
@@ -8,6 +9,7 @@ namespace ERP.Application.Purchasing.Commands.Suppliers;
 /// <summary>
 /// Command to delete a supplier (soft delete)
 /// </summary>
+[RequiresPermission("purchasing.suppliers.delete")]
 public class DeleteSupplierCommand : ICommand<bool>
 {
     public Guid Id { get; set; }

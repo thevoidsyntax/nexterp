@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ERP.Application.Common.Base;
+using ERP.Application.Common.Behaviors;
 using ERP.Application.Common.Interfaces;
 using ERP.Domain.Accounting.Entities;
 
@@ -9,6 +10,7 @@ namespace ERP.Application.Accounting.Commands.JournalEntries;
 /// <summary>
 /// Command to cancel a journal entry
 /// </summary>
+[RequiresPermission("accounting.journals.cancel")]
 public class CancelJournalEntryCommand : ICommand<bool>
 {
     public Guid Id { get; set; }

@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ERP.Application.Common.Base;
+using ERP.Application.Common.Behaviors;
 using ERP.Application.Common.Interfaces;
 
 namespace ERP.Application.Accounting.Commands.JournalEntries;
@@ -8,6 +9,7 @@ namespace ERP.Application.Accounting.Commands.JournalEntries;
 /// <summary>
 /// Command to reverse a posted journal entry
 /// </summary>
+[RequiresPermission("accounting.journals.reverse")]
 public class ReverseJournalEntryCommand : ICommand<bool>
 {
     public Guid Id { get; set; }

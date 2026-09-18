@@ -1,3 +1,4 @@
+using ERP.Application.Common.Behaviors;
 using ERP.Application.Common.Interfaces;
 using ERP.Domain.Assets.Entities;
 using MediatR;
@@ -5,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ERP.Application.Assets.Commands;
 
+[RequiresPermission("assets.assets.create")]
 public record CreateAssetCommand(
     string AssetCode,
     string Name,
@@ -51,6 +53,7 @@ public class CreateAssetHandler : IRequestHandler<CreateAssetCommand, Guid>
     }
 }
 
+[RequiresPermission("assets.assets.update")]
 public record UpdateAssetCommand(
     Guid Id,
     string Name,
@@ -83,6 +86,7 @@ public class UpdateAssetHandler : IRequestHandler<UpdateAssetCommand, bool>
     }
 }
 
+[RequiresPermission("assets.maintenance.create")]
 public record CreateAssetMaintenanceCommand(
     Guid AssetId,
     string Type,
@@ -120,6 +124,7 @@ public class CreateAssetMaintenanceHandler : IRequestHandler<CreateAssetMaintena
     }
 }
 
+[RequiresPermission("assets.assets.read")]
 public record GetAssetsQuery(string? SearchTerm, string? Status, string? AssetType) : IRequest<List<Asset>>;
 
 public class GetAssetsHandler : IRequestHandler<GetAssetsQuery, List<Asset>>
@@ -159,6 +164,7 @@ public class GetAssetsHandler : IRequestHandler<GetAssetsQuery, List<Asset>>
     }
 }
 
+[RequiresPermission("assets.assets.read")]
 public record GetAssetByIdQuery(Guid AssetId) : IRequest<Asset?>;
 
 public class GetAssetByIdHandler : IRequestHandler<GetAssetByIdQuery, Asset?>

@@ -1,4 +1,5 @@
 using ERP.Domain.Common;
+using ERP.Domain.Common.Modules;
 using ERP.Domain.Inventory.Enums;
 
 namespace ERP.Domain.Inventory.Entities;
@@ -6,7 +7,7 @@ namespace ERP.Domain.Inventory.Entities;
 /// <summary>
 /// Stock Transaction entity for tracking all inventory movements
 /// </summary>
-public class StockTransaction : BaseEntity
+public class StockTransaction : BaseEntity, ITenantEntity
 {
     public Guid OrganizationId { get; private set; }
     public string TransactionNumber { get; private set; } = string.Empty;

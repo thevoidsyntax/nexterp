@@ -1,9 +1,11 @@
+using ERP.Domain.Common.Modules;
+
 namespace ERP.Domain.Quality.Entities;
 
 /// <summary>
 /// Quality inspection entity
 /// </summary>
-public class Inspection
+public class Inspection : ITenantEntity
 {
     public Guid Id { get; set; }
     public Guid OrganizationId { get; set; }
@@ -23,7 +25,7 @@ public class Inspection
 /// <summary>
 /// Non-conformance report
 /// </summary>
-public class NonConformance
+public class NonConformance : ITenantEntity
 {
     public Guid Id { get; set; }
     public Guid OrganizationId { get; set; }

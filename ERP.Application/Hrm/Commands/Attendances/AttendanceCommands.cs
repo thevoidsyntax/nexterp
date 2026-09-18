@@ -14,6 +14,7 @@ namespace ERP.Application.Hrm.Commands.Attendances;
 /// Command to record attendance
 /// </summary>
 [RequiresModule("HRM")]
+[RequiresPermission("hrm.attendance.manage")]
 public class RecordAttendanceCommand : ICommand<Guid>
 {
     public Guid EmployeeId { get; set; }
@@ -110,6 +111,7 @@ public class RecordAttendanceCommandHandler : IRequestHandler<RecordAttendanceCo
 /// Command to check in
 /// </summary>
 [RequiresModule("HRM")]
+[RequiresPermission("hrm.attendance.checkin")]
 public class CheckInCommand : ICommand
 {
     public Guid EmployeeId { get; set; }
@@ -167,6 +169,7 @@ public class CheckInCommandHandler : IRequestHandler<CheckInCommand, Result>
 /// Command to check out
 /// </summary>
 [RequiresModule("HRM")]
+[RequiresPermission("hrm.attendance.checkin")]
 public class CheckOutCommand : ICommand
 {
     public Guid EmployeeId { get; set; }

@@ -1,3 +1,4 @@
+using ERP.Application.Common.Behaviors;
 using ERP.Application.Hrm.DTOs;
 using MediatR;
 
@@ -6,6 +7,7 @@ namespace ERP.Application.Hrm.Queries.Hrm;
 /// <summary>
 /// Get HRM Dashboard data.
 /// </summary>
+[RequiresPermission("hrm.dashboard.read")]
 public record GetHrmDashboardQuery(
     Guid OrganizationId,
     int? Year = null,
@@ -15,6 +17,7 @@ public record GetHrmDashboardQuery(
 /// <summary>
 /// Get daily attendance report.
 /// </summary>
+[RequiresPermission("hrm.attendance.read")]
 public record GetDailyAttendanceReportQuery(
     Guid OrganizationId,
     DateTime Date
@@ -23,6 +26,7 @@ public record GetDailyAttendanceReportQuery(
 /// <summary>
 /// Get department statistics.
 /// </summary>
+[RequiresPermission("hrm.departments.read")]
 public record GetDepartmentStatsQuery(
     Guid OrganizationId,
     Guid? DepartmentId = null
@@ -31,6 +35,7 @@ public record GetDepartmentStatsQuery(
 /// <summary>
 /// Get employee overview by department.
 /// </summary>
+[RequiresPermission("hrm.employees.read")]
 public record GetEmployeeOverviewQuery(
     Guid OrganizationId,
     Guid? DepartmentId = null
@@ -39,6 +44,7 @@ public record GetEmployeeOverviewQuery(
 /// <summary>
 /// Get attendance summary for period.
 /// </summary>
+[RequiresPermission("hrm.attendance.read")]
 public record GetAttendanceSummaryQuery(
     Guid OrganizationId,
     DateTime StartDate,
