@@ -1,5 +1,5 @@
-# E2E Testing Configuration
-# Run with: npx playwright test
+// E2E Testing Configuration
+// Run with: npx playwright test
 
 import { defineConfig, devices } from '@playwright/test';
 
