@@ -34,16 +34,23 @@ public class RoleDto
 public class GetRolesQueryHandler : IRequestHandler<GetRolesQuery, Result<PaginatedList<RoleDto>>>
 {
     private readonly IApplicationDbContext _context;
+    private readonly ICurrentUserService _currentUser;
 
-    public GetRolesQueryHandler(IApplicationDbContext context)
+    public GetRolesQueryHandler(IApplicationDbContext context, ICurrentUserService currentUser)
     {
         _context = context;
+        _currentUser = currentUser;
     }
 
     public async Task<Result<PaginatedList<RoleDto>>> Handle(GetRolesQuery request, CancellationToken cancellationToken)
     {
+        // Role isn't covered by the global tenant filter (see ERPDbContext), so a
+        // client-supplied OrganizationId would otherwise let any Admin list another
+        // org's roles. Only a SuperAdmin may query an arbitrary organization.
+        var organizationId = _currentUser.IsSuperAdmin ? request.OrganizationId : _currentUser.OrganizationId;
+
         var query = _context.Roles
-            .Where(r => r.OrganizationId == request.OrganizationId && !r.IsDeleted)
+            .Where(r => r.OrganizationId == organizationId && !r.IsDeleted)
             .AsQueryable();
 
         if (request.IsActive.HasValue)

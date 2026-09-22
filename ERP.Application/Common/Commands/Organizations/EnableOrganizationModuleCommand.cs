@@ -15,14 +15,22 @@ public class EnableOrganizationModuleCommand : ICommand<bool>
 public class EnableOrganizationModuleCommandHandler : IRequestHandler<EnableOrganizationModuleCommand, Result<bool>>
 {
     private readonly IApplicationDbContext _context;
+    private readonly ICurrentUserService _currentUser;
 
-    public EnableOrganizationModuleCommandHandler(IApplicationDbContext context)
+    public EnableOrganizationModuleCommandHandler(IApplicationDbContext context, ICurrentUserService currentUser)
     {
         _context = context;
+        _currentUser = currentUser;
     }
 
     public async Task<Result<bool>> Handle(EnableOrganizationModuleCommand request, CancellationToken cancellationToken)
     {
+        // The route takes OrganizationId as a path parameter and allows the "Admin" role
+        // (not just "SuperAdmin"), so without this check any org's Admin could enable
+        // modules for a completely different organization by changing the URL.
+        if (!_currentUser.IsSuperAdmin && _currentUser.OrganizationId != request.OrganizationId)
+            return Result<bool>.Failure("Not authorized to manage modules for this organization");
+
         var organization = await _context.Organizations
             .FirstOrDefaultAsync(o => o.Id == request.OrganizationId && !o.IsDeleted, cancellationToken);
 

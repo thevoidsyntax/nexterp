@@ -43,18 +43,24 @@ public class RoleUserDto
 public class GetRoleByIdQueryHandler : IRequestHandler<GetRoleByIdQuery, Result<RoleDetailDto>>
 {
     private readonly IApplicationDbContext _context;
+    private readonly ICurrentUserService _currentUser;
 
-    public GetRoleByIdQueryHandler(IApplicationDbContext context)
+    public GetRoleByIdQueryHandler(IApplicationDbContext context, ICurrentUserService currentUser)
     {
         _context = context;
+        _currentUser = currentUser;
     }
 
     public async Task<Result<RoleDetailDto>> Handle(GetRoleByIdQuery request, CancellationToken cancellationToken)
     {
+        // See GetRolesQueryHandler: Role isn't tenant-filtered, so this can't trust a
+        // client-supplied OrganizationId except for a SuperAdmin.
+        var organizationId = _currentUser.IsSuperAdmin ? request.OrganizationId : _currentUser.OrganizationId;
+
         var role = await _context.Roles
             .Include(r => r.Permissions.Where(p => !p.IsDeleted))
             .FirstOrDefaultAsync(r => r.Id == request.Id &&
-                                    r.OrganizationId == request.OrganizationId &&
+                                    r.OrganizationId == organizationId &&
                                     !r.IsDeleted, cancellationToken);
 
         if (role == null)

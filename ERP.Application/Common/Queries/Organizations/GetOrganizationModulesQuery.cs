@@ -28,14 +28,21 @@ public class OrganizationModuleDto
 public class GetOrganizationModulesQueryHandler : IRequestHandler<GetOrganizationModulesQuery, Result<List<OrganizationModuleDto>>>
 {
     private readonly IApplicationDbContext _context;
+    private readonly ICurrentUserService _currentUser;
 
-    public GetOrganizationModulesQueryHandler(IApplicationDbContext context)
+    public GetOrganizationModulesQueryHandler(IApplicationDbContext context, ICurrentUserService currentUser)
     {
         _context = context;
+        _currentUser = currentUser;
     }
 
     public async Task<Result<List<OrganizationModuleDto>>> Handle(GetOrganizationModulesQuery request, CancellationToken cancellationToken)
     {
+        // See EnableOrganizationModuleCommandHandler: the route's OrganizationId path
+        // parameter can't be trusted without tying it back to the caller.
+        if (!_currentUser.IsSuperAdmin && _currentUser.OrganizationId != request.OrganizationId)
+            return Result<List<OrganizationModuleDto>>.Failure("Not authorized to view modules for this organization");
+
         // Get all available modules
         var allModules = ModuleConfigurationLoader.GetAllModules();
 

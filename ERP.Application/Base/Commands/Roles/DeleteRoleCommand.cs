@@ -8,24 +8,35 @@ namespace ERP.Application.Base.Commands.Roles;
 public class DeleteRoleCommand : ICommand<bool>
 {
     public Guid Id { get; set; }
+    // Ignored by the handler, which derives the organization from the
+    // authenticated user; kept only for backward API compatibility.
     public Guid OrganizationId { get; set; }
 }
 
 public class DeleteRoleCommandHandler : IRequestHandler<DeleteRoleCommand, Result<bool>>
 {
     private readonly IApplicationDbContext _context;
+    private readonly ICurrentUserService _currentUser;
 
-    public DeleteRoleCommandHandler(IApplicationDbContext context)
+    public DeleteRoleCommandHandler(IApplicationDbContext context, ICurrentUserService currentUser)
     {
         _context = context;
+        _currentUser = currentUser;
     }
 
     public async Task<Result<bool>> Handle(DeleteRoleCommand request, CancellationToken cancellationToken)
     {
+        // Organization is taken from the authenticated user's context — see
+        // UpdateRoleCommandHandler for why the request body can't be trusted here.
+        if (_currentUser.OrganizationId == null)
+            return Result<bool>.Failure("User is not associated with an organization");
+
+        var organizationId = _currentUser.OrganizationId.Value;
+
         var role = await _context.Roles
             .Include(r => r.Permissions)
             .FirstOrDefaultAsync(r => r.Id == request.Id &&
-                                    r.OrganizationId == request.OrganizationId, cancellationToken);
+                                    r.OrganizationId == organizationId, cancellationToken);
 
         if (role == null)
             return Result<bool>.Failure("Role not found");

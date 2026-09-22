@@ -32,19 +32,26 @@ public class GetUsersPaginatedQuery : IQuery<PaginatedResult<UserDto>>
 public class GetUserByIdQueryHandler : IRequestHandler<GetUserByIdQuery, Result<UserDto>>
 {
     private readonly IApplicationDbContext _context;
+    private readonly ICurrentUserService _currentUser;
 
-    public GetUserByIdQueryHandler(IApplicationDbContext context)
+    public GetUserByIdQueryHandler(IApplicationDbContext context, ICurrentUserService currentUser)
     {
         _context = context;
+        _currentUser = currentUser;
     }
 
     public async Task<Result<UserDto>> Handle(GetUserByIdQuery request, CancellationToken cancellationToken)
     {
+        // User isn't covered by the global tenant filter (see ERPDbContext), so without
+        // this check any authenticated caller could fetch any other org's user by GUID.
         var user = await _context.Users
             .AsNoTracking()
             .FirstOrDefaultAsync(u => u.Id == request.Id && !u.IsDeleted, cancellationToken);
 
         if (user == null)
+            return Result<UserDto>.Failure("User not found");
+
+        if (!_currentUser.IsSuperAdmin && user.OrganizationId != _currentUser.OrganizationId)
             return Result<UserDto>.Failure("User not found");
 
         var dto = new UserDto
@@ -74,18 +81,31 @@ public class GetUserByIdQueryHandler : IRequestHandler<GetUserByIdQuery, Result<
 public class GetUsersPaginatedQueryHandler : IRequestHandler<GetUsersPaginatedQuery, Result<PaginatedResult<UserDto>>>
 {
     private readonly IApplicationDbContext _context;
+    private readonly ICurrentUserService _currentUser;
 
-    public GetUsersPaginatedQueryHandler(IApplicationDbContext context)
+    public GetUsersPaginatedQueryHandler(IApplicationDbContext context, ICurrentUserService currentUser)
     {
         _context = context;
+        _currentUser = currentUser;
     }
 
     public async Task<Result<PaginatedResult<UserDto>>> Handle(GetUsersPaginatedQuery request, CancellationToken cancellationToken)
     {
+        // Only a SuperAdmin may list users across organizations (or filter by an
+        // arbitrary OrganizationId); everyone else is always scoped to their own org,
+        // regardless of what was requested — User isn't covered by the global tenant
+        // filter (see ERPDbContext), so an unfiltered request would otherwise return
+        // every organization's users. Fail closed (not "list everything") if a
+        // non-SuperAdmin somehow has no OrganizationId.
+        if (!_currentUser.IsSuperAdmin && _currentUser.OrganizationId == null)
+            return Result<PaginatedResult<UserDto>>.Failure("User is not associated with an organization");
+
+        var organizationFilter = _currentUser.IsSuperAdmin ? request.OrganizationId : _currentUser.OrganizationId;
+
         var query = _context.Users.AsNoTracking().Where(u => !u.IsDeleted);
 
-        if (request.OrganizationId.HasValue)
-            query = query.Where(u => u.OrganizationId == request.OrganizationId.Value);
+        if (organizationFilter.HasValue)
+            query = query.Where(u => u.OrganizationId == organizationFilter.Value);
 
         if (request.IsActive.HasValue)
             query = query.Where(u => u.IsActive == request.IsActive.Value);

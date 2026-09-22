@@ -8,6 +8,8 @@ namespace ERP.Application.Base.Commands.Users;
 /// </summary>
 public class CreateUserCommand : ICommand<Guid>
 {
+    // Ignored by the handler, which derives the organization from the
+    // authenticated user; kept only for backward API compatibility.
     public Guid OrganizationId { get; set; }
     public string Username { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
@@ -53,8 +55,5 @@ public class CreateUserCommandValidator : AbstractValidator<CreateUserCommand>
         RuleFor(x => x.Phone)
             .Matches(@"^\+?[0-9]{10,15}$").When(x => !string.IsNullOrEmpty(x.Phone))
             .WithMessage("Invalid phone number format");
-
-        RuleFor(x => x.OrganizationId)
-            .NotEmpty().WithMessage("Organization ID is required");
     }
 }

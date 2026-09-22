@@ -12,14 +12,29 @@ namespace ERP.Application.Base.Commands.Users;
 public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Result<Guid>>
 {
     private readonly IApplicationDbContext _context;
+    private readonly ICurrentUserService _currentUser;
 
-    public CreateUserCommandHandler(IApplicationDbContext context)
+    public CreateUserCommandHandler(IApplicationDbContext context, ICurrentUserService currentUser)
     {
         _context = context;
+        _currentUser = currentUser;
     }
 
     public async Task<Result<Guid>> Handle(CreateUserCommand request, CancellationToken cancellationToken)
     {
+        // Organization is taken from the authenticated user's context, not the
+        // request body, so a caller cannot create users under another org.
+        if (_currentUser.OrganizationId == null)
+            return Result<Guid>.Failure("User is not associated with an organization");
+
+        var organizationId = _currentUser.OrganizationId.Value;
+
+        var organizationExists = await _context.Organizations
+            .AnyAsync(o => o.Id == organizationId && !o.IsDeleted, cancellationToken);
+
+        if (!organizationExists)
+            return Result<Guid>.Failure("Organization not found");
+
         // Check if username already exists
         var existingUsername = await _context.Users
             .AnyAsync(u => u.Username == request.Username.ToLowerInvariant(), cancellationToken);
@@ -34,19 +49,12 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Resul
         if (existingEmail)
             return Result<Guid>.Failure("Email already exists");
 
-        // Check if organization exists
-        var organizationExists = await _context.Organizations
-            .AnyAsync(o => o.Id == request.OrganizationId && !o.IsDeleted, cancellationToken);
-
-        if (!organizationExists)
-            return Result<Guid>.Failure("Organization not found");
-
         // Hash password
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
         // Create user
         var user = User.Create(
-            request.OrganizationId,
+            organizationId,
             request.Username,
             request.Email,
             passwordHash,
@@ -56,11 +64,13 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Resul
 
         _context.Users.Add(user);
 
-        // Assign roles if provided
+        // Assign roles if provided. Role isn't an ITenantEntity, so the global
+        // tenant filter doesn't scope this query — filter explicitly here to
+        // stop a caller from assigning a role that belongs to another org.
         if (request.RoleIds != null && request.RoleIds.Any())
         {
             var validRoles = await _context.Roles
-                .Where(r => request.RoleIds.Contains(r.Id) && !r.IsDeleted)
+                .Where(r => request.RoleIds.Contains(r.Id) && r.OrganizationId == organizationId && !r.IsDeleted)
                 .ToListAsync(cancellationToken);
 
             foreach (var role in validRoles)
