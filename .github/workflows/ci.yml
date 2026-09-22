@@ -56,8 +56,78 @@ jobs:
     name: E2E Tests
     runs-on: ubuntu-latest
     needs: [lint, typecheck]
+    # The frontend needs a real backend to log in against, so this job overrides
+    # the workflow-level frontend working-directory default and runs its own
+    # Postgres-backed API alongside the Next.js server Playwright starts.
+    defaults:
+      run:
+        working-directory: .
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: nexterp
+          POSTGRES_PASSWORD: nexterp_ci_password
+          POSTGRES_DB: nexterp_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U nexterp"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    env:
+      ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=nexterp_ci;Username=nexterp;Password=nexterp_ci_password"
+      Redis__ConnectionString: "localhost:6379"
+      ASPNETCORE_ENVIRONMENT: Development
+      DEMO_PASSWORD: "DevPassword2024!"
+      NEXT_PUBLIC_API_URL: "http://localhost:5000"
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          # 10.0.x runs the app; 8.0.x is needed by the dotnet-ef tool, which is
+          # pinned to match the EFCore.Design package version below.
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Restore backend
+        run: dotnet restore ERP.API/ERP.API.csproj
+
+      - name: Install EF Core CLI tool
+        run: |
+          dotnet tool install --global dotnet-ef --version 8.0.0
+          echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
+
+      - name: Apply database migrations
+        run: dotnet ef database update --project ERP.Infrastructure --startup-project ERP.API
+
+      - name: Start backend API
+        run: |
+          nohup dotnet run --project ERP.API --no-launch-profile > api.log 2>&1 &
+          disown
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:5000/health/live > /dev/null; then
+              echo "Backend API is up"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Backend API failed to start within the timeout"
+          cat api.log
+          exit 1
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -66,13 +136,16 @@ jobs:
           cache: 'npm'
           cache-dependency-path: nextjs-frontend/package-lock.json
 
-      - name: Install dependencies
+      - name: Install frontend dependencies
+        working-directory: nextjs-frontend
         run: npm ci
 
       - name: Install Playwright Browsers
+        working-directory: nextjs-frontend
         run: npx playwright install --with-deps
 
       - name: Run Playwright tests
+        working-directory: nextjs-frontend
         run: npm run test:ci
 
       - name: Upload Playwright Report
@@ -89,4 +162,12 @@ jobs:
         with:
           name: test-results
           path: nextjs-frontend/test-results/
+          retention-days: 7
+
+      - name: Upload backend API logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-logs
+          path: api.log
           retention-days: 7
