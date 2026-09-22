@@ -41,7 +41,7 @@ jobs:
         run: npm install -g @railway/cli
 
       - name: Deploy to Railway
-        run: railway up --service ERP-API --root .
+        run: railway up --service ERP-API
 
       - name: Set Railway Variables
         run: |
@@ -58,7 +58,7 @@ jobs:
         run: sleep 20
 
       - name: Get Railway URL
-        run: railway url || echo "Check Railway dashboard"
+        run: railway domain list || echo "Check Railway dashboard"
 
   # ─────────────────────────────────────────────────────
   # Vercel Frontend (Next.js)
