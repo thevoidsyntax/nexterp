@@ -1,166 +1,137 @@
-# NEXTERP ERP - Development Setup
+# NEXTERP
 
-## Quick Start with Docker Compose
+A multi-tenant ERP system with 9 business modules, built on a .NET Clean Architecture backend and a Next.js frontend.
 
-### Prerequisites
-- Docker & Docker Compose installed
-- 4GB+ RAM available
+[![CI](https://github.com/thevoidsyntax/nexterp/actions/workflows/ci.yml/badge.svg)](https://github.com/thevoidsyntax/nexterp/actions/workflows/ci.yml)
+[![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-### Start Development Environment
+## Modules
+
+Accounting · Analytics · Assets · HRM · Inventory · Projects · Purchasing · Quality · Sales
+
+Access to every command and query is enforced by a `[RequiresPermission("module.resource.action")]`
+attribute checked in a MediatR pipeline behavior, and data is isolated per organization by an
+EF Core global query filter — see [Multi-tenancy & permissions](#multi-tenancy--permissions).
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Backend | .NET 10, MediatR (CQRS), FluentValidation, EF Core |
+| Frontend | Next.js 16, React 19, TypeScript (strict), TailwindCSS, Zustand |
+| Database | PostgreSQL |
+| Cache | Redis |
+| Auth | JWT + BCrypt |
+| Testing | Playwright (E2E), Storybook, Jest |
+| Deployment | Railway (backend) + Vercel (frontend) |
+
+## Project Structure
+
+```
+nexterp/
+├── ERP.API/              # REST API — controllers, Program.cs, middleware
+├── ERP.Application/      # CQRS commands/queries, validators, permission attributes
+├── ERP.Domain/           # Entities, value objects, enums — no external dependencies
+├── ERP.Infrastructure/   # EF Core DbContext, tenant query filters, JWT/Redis services
+├── ERP.API.ContractTests/
+├── ERP.Application.UnitTests/
+├── ERP.Domain.UnitTests/
+├── nextjs-frontend/      # Next.js app (App Router) — the active frontend
+├── docker/               # Dockerfiles and init scripts for local services
+├── docs/                 # Additional documentation and assets
+└── docker-compose.yml    # Full local stack: db, redis, api, frontend, pgAdmin
+```
+
+> `ERP.WebUI/` is a legacy frontend folder kept for reference only. `nextjs-frontend/` is the
+> real, actively developed frontend — see the note in `TODO.md`.
+
+## Getting Started
+
+### Option A — Docker Compose (fastest)
 
 ```bash
-# Start all services
+cp .env.example .env    # then fill in JWT_SECRET_KEY, POSTGRES_PASSWORD, etc.
 docker-compose up -d
-
-# View logs
 docker-compose logs -f
-
-# Stop all services
-docker-compose down
 ```
 
-### Services
+| Service | URL |
+|---|---|
+| Frontend | http://localhost:3000 |
+| Backend API | http://localhost:5000 |
+| PostgreSQL | localhost:5432 |
+| Redis | localhost:6379 |
+| pgAdmin | http://localhost:5050 |
+| Redis Commander | http://localhost:8081 |
 
-| Service | URL | Credentials |
-|---------|-----|------------|
-| Frontend (Next.js) | http://localhost:3000 | - |
-| Backend API (.NET) | http://localhost:5000 | - |
-| PostgreSQL | localhost:5432 | nexterp / nexterp_dev_password |
-| Redis | localhost:6379 | - |
-| pgAdmin | http://localhost:5050 | admin@nexterp.local / admin123 |
-| Redis Commander | http://localhost:8081 | - |
+### Option B — Run locally
 
-### Environment Variables
-
-Copy `.env.example` to `.env` and configure:
+Requires the .NET 10 SDK, Node.js 18+, and PostgreSQL/Redis (via Docker or local install).
 
 ```bash
-cp .env.example .env
-```
+# Backend
+dotnet restore
+dotnet ef database update --project ERP.Infrastructure --startup-project ERP.API
+dotnet run --project ERP.API
 
-Key variables:
-- `JWT_SECRET_KEY` - JWT signing key (min 32 chars)
-- `ConnectionStrings__DefaultConnection` - PostgreSQL connection
-- `Redis__ConnectionString` - Redis connection
-
-### Database Commands
-
-```bash
-# Run migrations
-docker-compose exec api dotnet ef database update
-
-# Open psql shell
-docker-compose exec db psql -U nexterp -d nexterp_dev
-```
-
-## E2E Testing with Playwright
-
-### Setup
-
-```bash
-# Install dependencies
+# Frontend (separate terminal)
+cd nextjs-frontend
 npm install
-
-# Install Playwright browsers
-npx playwright install --with-deps
+npm run dev
 ```
 
-### Run Tests
+## Common Commands
 
 ```bash
-# Run all tests
-npm run test
+# Frontend
+cd nextjs-frontend
+npm run dev        # Development server
+npm run build      # Production build
+npm run lint        # ESLint
+npx tsc --noEmit    # TypeScript check
+npm run test        # Playwright E2E tests
+npm run storybook   # Component explorer
 
-# Run with UI
-npm run test:ui
-
-# Run specific test file
-npm run test:auth
-
-# Run in headed mode (see browser)
-npm run test:headed
-
-# Run API tests only
-npm run test:api
+# Backend
+dotnet build
+dotnet test
+dotnet run --project ERP.API
 ```
 
-### Test Structure
+## Multi-tenancy & Permissions
 
-```
-tests/
-├── auth.spec.ts      # Login/logout tests
-├── dashboard.spec.ts  # Dashboard and navigation tests
-├── api.spec.ts       # API integration tests
-└── ...
-```
+- Every tenant-owned entity implements `ITenantEntity`. `ERPDbContext` applies a global EF Core
+  query filter (`OrganizationId == currentTenantId`) to all of them via reflection, so a query
+  simply cannot cross tenants by accident.
+- Every command/query handler is decorated with `[RequiresPermission("module.resource.action")]`
+  and checked centrally by `PermissionAuthorizationBehavior` in the MediatR pipeline — permission
+  checks are not scattered per-endpoint.
+- Write handlers derive `OrganizationId` from the authenticated user's `ICurrentUserService`
+  context, never from client-supplied request fields.
 
-### Configuration
+See `TODO.md` for known follow-ups (e.g. `Base/Roles` and `Base/Users` commands that still need
+the same write-side hardening).
 
-Edit `playwright.config.ts` to customize:
-- Base URL
-- Test timeout
-- Screenshot settings
-- CI mode
+## CI/CD
 
-### Writing Tests
+GitHub Actions runs lint, typecheck, and E2E tests on every push/PR (`.github/workflows/ci.yml`),
+and deploys `master` to Railway (backend) and Vercel (frontend) on merge
+(`.github/workflows/deploy.yml`). Deploys require `RAILWAY_TOKEN`, `VERCEL_TOKEN`,
+`VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`, `JWT_SECRET_KEY`, and `REDIS_CONNECTION_STRING` to be set as
+repository secrets.
 
-```typescript
-import { test, expect } from '@playwright/test';
+## More Documentation
 
-test('my test', async ({ page }) => {
-  await page.goto('/login');
-  await expect(page.locator('h1')).toContainText('Login');
-});
-```
+| File | Purpose |
+|---|---|
+| [`README_DEV.md`](README_DEV.md) | Architecture deep-dive, CQRS examples, API reference |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) | Branching, commit style, PR process |
+| [`SECURITY.md`](SECURITY.md) | Reporting vulnerabilities |
+| [`TODO.md`](TODO.md) | Task list, progress, known gaps |
+| [`CHANGELOG.md`](CHANGELOG.md) | Release history |
 
-### CI/CD
+## License
 
-For CI environments, tests run against the production build:
-
-```bash
-# Build and test
-npm run build
-npm run test:ci
-```
-
-## Keyboard Shortcuts
-
-| Shortcut | Action |
-|----------|--------|
-| `Ctrl+K` | Open Command Palette |
-| `Ctrl+1-7` | Navigate to sections |
-| `Ctrl+N` | Create new item |
-| `Ctrl+S` | Save |
-| `Ctrl+R` | Refresh |
-| `Escape` | Close modal |
-
-## Troubleshooting
-
-### Port Already in Use
-
-```bash
-# Find and kill process on port
-lsof -i :3000
-kill -9 <PID>
-```
-
-### Database Connection Issues
-
-```bash
-# Restart database
-docker-compose restart db
-
-# Check database logs
-docker-compose logs db
-```
-
-### Clean Start
-
-```bash
-# Remove all containers and volumes
-docker-compose down -v
-
-# Rebuild and start
-docker-compose up --build -d
-```
-# retry
+MIT — see [`LICENSE`](LICENSE).
