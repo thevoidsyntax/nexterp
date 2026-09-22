@@ -8,7 +8,7 @@ Project-specific architecture guidelines for NEXTERP ERP system.
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  PRESENTATION LAYER (ERP.API + ERP.WebUI)               │
+│  PRESENTATION LAYER (ERP.API + nextjs-frontend)               │
 │  Controllers, Middleware, API endpoints                 │
 └─────────────────────────────────────────────────────────┘
                             │

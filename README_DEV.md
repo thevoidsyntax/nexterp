@@ -117,7 +117,7 @@ dotnet ef database update --project ERP.Infrastructure --startup-project ERP.API
 dotnet run --project ERP.API
 
 # 8. Run Frontend (separate terminal)
-cd ERP.WebUI
+cd nextjs-frontend
 npm install
 npm run dev
 ```
@@ -172,7 +172,7 @@ nexterp/
 │   ├── Services/               # JWT, CurrentUser services
 │   └── Repositories/           # Repository implementations
 │
-├── ERP.WebUI/                   # Next.js Frontend
+├── nextjs-frontend/              # Next.js Frontend
 │   ├── src/
 │   │   ├── app/               # App Router pages
 │   │   ├── components/        # React components
@@ -370,7 +370,7 @@ dotnet test --collect:"XPlat Code Coverage"
 dotnet test ERP.Domain.UnitTests
 
 # Frontend tests
-cd ERP.WebUI && npm test
+cd nextjs-frontend && npm run test:jest
 ```
 
 ---

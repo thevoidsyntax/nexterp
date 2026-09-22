@@ -24,7 +24,7 @@ d:\RW\PROJECT RW\ERP\
 ├── ERP.Application.UnitTests/      → Application layer tests (xUnit + Moq)
 ├── ERP.API.ContractTests/          → Pact contract tests
 ├── ERP.Infrastructure.UnitTests/  → (future) Infrastructure tests
-└── ERP.WebUI/
+└── nextjs-frontend/
     ├── src/**/*.test.{ts,tsx}      → Jest unit tests
     ├── src/**/*.spec.{ts,tsx}      → Component tests
     └── e2e/                        → Playwright E2E tests
@@ -67,7 +67,7 @@ dotnet test -v n
 ### Frontend Tests
 
 ```bash
-cd ERP.WebUI
+cd nextjs-frontend
 
 # Install dependencies
 npm install
@@ -97,7 +97,7 @@ dotnet tool install --global dotnet-stryker 2>/dev/null || true
 dotnet stryker
 
 # Frontend (jest-stryker)
-cd ERP.WebUI
+cd nextjs-frontend
 npm install
 npm run test:mutation
 

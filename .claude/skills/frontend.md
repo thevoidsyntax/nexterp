@@ -19,7 +19,7 @@ Project-specific frontend standards for NEXTERP ERP system.
 ## PROJECT STRUCTURE
 
 ```
-ERP.WebUI/
+nextjs-frontend/
 ├── src/
 │   ├── app/                    # App Router (Next.js 14)
 │   │   ├── (auth)/            # Auth pages (login, register)

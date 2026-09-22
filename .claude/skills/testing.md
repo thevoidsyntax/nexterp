@@ -11,7 +11,7 @@ Project-specific testing standards for NEXTERP ERP system.
 ERP.Domain.UnitTests/           → Domain layer tests (325 tests)
 ERP.Application.UnitTests/      → Application layer tests (272 tests)
 ERP.API.ContractTests/          → API contract tests
-ERP.WebUI/                      → Jest + Playwright for frontend
+nextjs-frontend/                      → Jest + Playwright for frontend
 ```
 
 ### Test Naming Convention
@@ -145,7 +145,7 @@ npm run test:e2e           # Run Playwright tests
 
 ### Test Structure
 ```
-ERP.WebUI/
+nextjs-frontend/
 ├── src/
 │   ├── __tests__/         # Unit tests
 │   └── components/        # Component tests

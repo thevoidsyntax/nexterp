@@ -119,6 +119,27 @@ verified by running the build/tests, not self-reported.
   introducing a new one — acceptable, but worth knowing if Railway/Redis cold-starts
   ever show up as slow app boot times.
 
+### Repo cleanup (same day, on request)
+- [x] **`ERP.API/erp.db` (440KB SQLite file) was committed to git**, and `.gitignore` had
+  no `*.db` rule. Contents checked — just the same demo seed data (admin user + a
+  handful of demo customers/suppliers), not real production data, but committing a
+  binary DB file is bad practice regardless. Removed from git, added `*.db`/`*.sqlite`/
+  `*.sqlite3` to `.gitignore`.
+- [x] **Deleted `ERP.WebUI/` (legacy frontend, 2.1MB/77 files, untouched since the
+  initial commit) and `docs/TODO_ROADMAP.md`** (superseded by this file, also untouched
+  since the initial commit) — both confirmed dead by the user before deletion.
+- [x] **`docker-compose.yml`/`docker-compose.prod.yml`'s frontend build was broken** —
+  `context: .` with `dockerfile: nextjs-frontend/Dockerfile` means `COPY package*.json
+  ./` in the Dockerfile looks for a lockfile at the repo root, which doesn't exist, so
+  `npm ci` always failed. Verified with `docker build` (fails with the old config,
+  succeeds after). Fixed to `context: ./nextjs-frontend` + `dockerfile: Dockerfile`.
+  This wasn't caused by the `ERP.WebUI` deletion — it was already broken before, just
+  pointed at a path that happened to still exist.
+- [x] Fixed lingering `ERP.WebUI` references in `README_DEV.md`, `README.md`,
+  `.claude/skills/{testing,frontend,architecture}.md`, `docs/RAILWAY_DEPLOYMENT.md`,
+  `docs/TESTING_STRATEGY.md`, and a stale net8.0 comment in
+  `.claude/hooks/session-start.sh` left over from before the CI fix above.
+
 ### Still broken / needs your action (couldn't fix without credentials or much bigger scope)
 - [ ] **Railway auto-deploy is broken right now.** The `RAILWAY_TOKEN` GitHub secret is
   invalid/expired — `gh run view` shows `Invalid RAILWAY_TOKEN. Please check that it is

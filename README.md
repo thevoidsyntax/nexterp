@@ -44,9 +44,6 @@ nexterp/
 └── docker-compose.yml    # Full local stack: db, redis, api, frontend, pgAdmin
 ```
 
-> `ERP.WebUI/` is a legacy frontend folder kept for reference only. `nextjs-frontend/` is the
-> real, actively developed frontend — see the note in `TODO.md`.
-
 ## Getting Started
 
 ### Option A — Docker Compose (fastest)

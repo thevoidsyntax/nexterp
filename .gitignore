@@ -57,6 +57,11 @@ logs/
 appsettings.*.json
 !.appsettings.example.json
 
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+
 # Docker
 docker-compose.override.yml
 

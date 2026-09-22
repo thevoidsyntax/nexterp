@@ -70,8 +70,8 @@ services:
   # Frontend (Next.js)
   frontend:
     build:
-      context: .
-      dockerfile: nextjs-frontend/Dockerfile
+      context: ./nextjs-frontend
+      dockerfile: Dockerfile
     container_name: nexterp-frontend-dev
     environment:
       NODE_ENV: development

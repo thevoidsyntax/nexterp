@@ -13,8 +13,7 @@ cd "$REPO_ROOT"
 status=0
 
 # ---------- Backend (.NET) ----------
-# Main projects target net10.0, the *.UnitTests/*.ContractTests projects target
-# net8.0 — a .NET 10 SDK can build/restore both, so we only need one install.
+# All projects (main + *.UnitTests/*.ContractTests) target net10.0.
 if ! command -v dotnet >/dev/null 2>&1; then
   echo "==> Installing .NET SDK..."
   DOTNET_INSTALL_DIR="$HOME/.dotnet"

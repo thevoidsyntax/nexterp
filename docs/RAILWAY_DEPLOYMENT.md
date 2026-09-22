@@ -52,7 +52,7 @@ JWT_SECRETKEY=YourSuperSecretKeyAtLeast32Characters!
 ### Step 5: Deploy Frontend
 
 ```bash
-cd ERP.WebUI
+cd nextjs-frontend
 railway up
 ```
 
@@ -91,7 +91,7 @@ git push -u origin main
 4. Add PostgreSQL and Redis plugins
 
 **Frontend:**
-1. Root directory: `ERP.WebUI`
+1. Root directory: `nextjs-frontend`
 2. Build command: `npm run build`
 3. Start command: `npm start`
 4. Add environment variables
@@ -125,7 +125,7 @@ railway run dotnet ef migrations add InitialCreate --project ERP.Infrastructure 
 | `Jwt__Issuer` | Token issuer | `ERP.System` |
 | `Jwt__Audience` | Token audience | `ERP.Client` |
 
-### Frontend (ERP.WebUI)
+### Frontend (nextjs-frontend)
 | Variable | Description | Example |
 |----------|-------------|---------|
 | `NEXT_PUBLIC_API_URL` | Backend API URL | `https://api-xxx.railway.app/api` |

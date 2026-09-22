@@ -222,8 +222,8 @@ services:
   # ===========================================
   frontend:
     build:
-      context: .
-      dockerfile: ERP.WebUI/Dockerfile
+      context: ./nextjs-frontend
+      dockerfile: Dockerfile
       args:
         NODE_ENV: production
         NEXT_TELEMETRY_DISABLED: "1"
