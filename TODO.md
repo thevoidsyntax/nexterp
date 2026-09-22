@@ -4,6 +4,25 @@
 
 ---
 
+## ✅ 2026-09-22: CI's "Apply database migrations" step, actually fixed this time
+
+The earlier CI fix today (net10 alignment) got past the `System.Runtime` load error,
+but the very next push still failed at the same step with a *different* error:
+`password authentication failed for user "postgres"` against
+`Host=localhost;Port=5432;Database=erp_db`. `dotnet ef database update` doesn't go
+through the app's normal `IConfiguration`/env-var pipeline — it uses
+`DesignTimeDbContextFactory`, which only reads a connection string from its first
+positional argument and otherwise silently falls back to its hardcoded default
+(`erp_db`/`postgres`/`postgres`), which doesn't match the CI job's actual Postgres
+service (`nexterp_ci`/`nexterp`/`nexterp_ci_password`) at all. Fixed
+`.github/workflows/ci.yml` to pass `-- "$ConnectionStrings__DefaultConnection"`
+explicitly. Verified locally end-to-end with the exact same env-var-driven command
+CI runs (migrations, then starting the API, then a real `/health/live` hit) against
+fresh Postgres+Redis containers before pushing, specifically so this wouldn't take a
+third round-trip through CI to catch.
+
+---
+
 ## 🔐 2026-09-22: Frontend was defeating the backend's own secure cookie auth
 
 The backend already implemented proper `HttpOnly; Secure` cookie-based auth (see

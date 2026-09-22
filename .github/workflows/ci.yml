@@ -131,7 +131,13 @@ jobs:
           echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
 
       - name: Apply database migrations
-        run: dotnet ef database update --project ERP.Infrastructure --startup-project ERP.API
+        # DesignTimeDbContextFactory (used by `dotnet ef`, not the app's own
+        # Program.cs/IConfiguration) only reads a connection string from its first
+        # positional argument, not from ConnectionStrings__DefaultConnection — without
+        # this it silently falls back to its hardcoded default
+        # ("Host=localhost;Port=5432;Database=erp_db;Username=postgres;Password=postgres"),
+        # which doesn't match this job's actual Postgres service at all.
+        run: dotnet ef database update --project ERP.Infrastructure --startup-project ERP.API -- "$ConnectionStrings__DefaultConnection"
 
       - name: Start backend API
         run: |
