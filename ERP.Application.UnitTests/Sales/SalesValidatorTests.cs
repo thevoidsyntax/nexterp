@@ -774,6 +774,71 @@ public class SalesValidatorTests
         result.ShouldNotHaveValidationErrorFor("Lines[0].TaxRate");
     }
 
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(101)]
+    [InlineData(150)]
+    public void CreateSalesOrderCommand_LineDiscountPercent_OutOfRange_ShouldFail(decimal discountPercent)
+    {
+        // Arrange
+        var validator = new CreateSalesOrderCommandValidator();
+        var command = new CreateSalesOrderCommand
+        {
+            CustomerId = Guid.NewGuid(),
+            OrderDate = DateTime.UtcNow,
+            Lines = new List<CreateSalesOrderLineDto>
+            {
+                new CreateSalesOrderLineDto
+                {
+                    StockItemId = Guid.NewGuid(),
+                    Quantity = 10,
+                    UnitPrice = 100,
+                    UnitOfMeasureId = Guid.NewGuid(),
+                    DiscountPercent = discountPercent
+                }
+            }
+        };
+
+        // Act
+        var result = validator.TestValidate(command);
+
+        // Assert
+        result.ShouldHaveValidationErrorFor("Lines[0].DiscountPercent")
+            .WithErrorMessage("Discount percent must be between 0 and 100");
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(50)]
+    [InlineData(100)]
+    public void CreateSalesOrderCommand_LineDiscountPercent_WhenValidRange_ShouldPass(decimal discountPercent)
+    {
+        // Arrange
+        var validator = new CreateSalesOrderCommandValidator();
+        var command = new CreateSalesOrderCommand
+        {
+            CustomerId = Guid.NewGuid(),
+            OrderDate = DateTime.UtcNow,
+            Lines = new List<CreateSalesOrderLineDto>
+            {
+                new CreateSalesOrderLineDto
+                {
+                    StockItemId = Guid.NewGuid(),
+                    Quantity = 10,
+                    UnitPrice = 100,
+                    UnitOfMeasureId = Guid.NewGuid(),
+                    DiscountPercent = discountPercent
+                }
+            }
+        };
+
+        // Act
+        var result = validator.TestValidate(command);
+
+        // Assert
+        result.ShouldNotHaveValidationErrorFor("Lines[0].DiscountPercent");
+    }
+
     [Fact]
     public void CreateSalesOrderCommand_MultipleLines_AllValid_ShouldPass()
     {

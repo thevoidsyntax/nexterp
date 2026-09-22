@@ -1,5 +1,6 @@
 using ERP.Domain.Common;
 using ERP.Domain.Common.Modules;
+using ERP.Domain.Common.ValueObjects;
 using ERP.Domain.Accounting.Enums;
 
 namespace ERP.Domain.Sales.Entities;
@@ -218,9 +219,9 @@ public class SalesOrder : BaseEntity, ITenantEntity
 
     private void RecalculateTotals()
     {
-        Subtotal = _lines.Sum(l => l.LineTotal);
-        TaxAmount = _lines.Sum(l => l.TaxAmount);
-        DiscountAmount = _lines.Sum(l => l.DiscountAmount ?? 0);
+        Subtotal = _lines.Sum(l => l.LineTotal.Amount);
+        TaxAmount = _lines.Sum(l => l.TaxAmount.Amount);
+        DiscountAmount = _lines.Sum(l => l.DiscountAmount?.Amount ?? 0);
         TotalAmount = Subtotal + TaxAmount - DiscountAmount;
         UpdateTimestamp();
     }
@@ -296,12 +297,12 @@ public class SalesOrderLine : BaseEntity
     public string Description { get; private set; } = string.Empty;
     public decimal Quantity { get; private set; }
     public decimal DeliveredQuantity { get; private set; }
-    public decimal UnitPrice { get; private set; }
+    public Money UnitPrice { get; private set; }
     public decimal? DiscountPercent { get; private set; }
-    public decimal? DiscountAmount { get; private set; }
+    public Money? DiscountAmount { get; private set; }
     public decimal TaxRate { get; private set; }
-    public decimal TaxAmount { get; private set; }
-    public decimal LineTotal { get; private set; }
+    public Money TaxAmount { get; private set; }
+    public Money LineTotal { get; private set; }
     public Guid UnitOfMeasureId { get; private set; }
 
     // Navigation properties
@@ -329,9 +330,9 @@ public class SalesOrderLine : BaseEntity
             StockItemId = stockItemId,
             Description = description.Trim(),
             Quantity = quantity,
-            UnitPrice = unitPrice,
+            UnitPrice = Money.Of(unitPrice),
             DiscountPercent = discountPercent,
-            DiscountAmount = discountAmount,
+            DiscountAmount = discountAmount.HasValue ? Money.Of(discountAmount.Value) : null,
             TaxRate = taxRate,
             UnitOfMeasureId = unitOfMeasureId
         };
@@ -342,22 +343,30 @@ public class SalesOrderLine : BaseEntity
 
     public void Update(decimal quantity, decimal unitPrice, decimal taxRate = 0)
     {
+        if (unitPrice < 0)
+            throw new ArgumentException("Unit price cannot be negative", nameof(unitPrice));
+
         Quantity = quantity;
-        UnitPrice = unitPrice;
+        UnitPrice = Money.Of(unitPrice);
         TaxRate = taxRate;
         CalculateTotals();
     }
 
+    // Kept as plain decimal arithmetic (identical to the pre-Money-value-object
+    // formula) and only wrapped back into Money at the end, so introducing the
+    // type here doesn't change any previously-computed amount.
     private void CalculateTotals()
     {
-        var grossTotal = Quantity * UnitPrice;
-        DiscountAmount = DiscountPercent.HasValue
+        var grossTotal = Quantity * UnitPrice.Amount;
+        var discountAmount = DiscountPercent.HasValue
             ? Math.Round(grossTotal * DiscountPercent.Value / 100, 2)
-            : DiscountAmount ?? 0;
+            : DiscountAmount?.Amount ?? 0;
+        DiscountAmount = Money.Of(discountAmount);
 
-        LineTotal = Math.Round(grossTotal - DiscountAmount.Value, 2);
-        TaxAmount = Math.Round(LineTotal * TaxRate / 100, 2);
-        LineTotal += TaxAmount;
+        var lineTotal = Math.Round(grossTotal - discountAmount, 2);
+        var taxAmount = Math.Round(lineTotal * TaxRate / 100, 2);
+        TaxAmount = Money.Of(taxAmount);
+        LineTotal = Money.Of(lineTotal + taxAmount);
     }
 
     public void SetDeliveredQuantity(decimal quantity)

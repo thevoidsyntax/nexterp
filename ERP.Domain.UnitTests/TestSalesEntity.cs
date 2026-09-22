@@ -364,9 +364,9 @@ public class TestSalesEntity
         // Subtotal: 1000 - 100 = 900
         // Tax: 900 * 10% = 90
         // Line Total: 900 + 90 = 990
-        Assert.Equal(100m, line.DiscountAmount);
-        Assert.Equal(90m, line.TaxAmount);
-        Assert.Equal(990m, line.LineTotal);
+        Assert.Equal(100m, line.DiscountAmount?.Amount);
+        Assert.Equal(90m, line.TaxAmount.Amount);
+        Assert.Equal(990m, line.LineTotal.Amount);
     }
 
     #endregion
@@ -613,9 +613,9 @@ public class TestSalesEntity
         // LineTotal before tax: 1000 - 100 = 900
         // Tax: 900 * 10% = 90
         // Final LineTotal: 900 + 90 = 990
-        Assert.Equal(100m, line.DiscountAmount);
-        Assert.Equal(90m, line.TaxAmount);
-        Assert.Equal(990m, line.LineTotal);
+        Assert.Equal(100m, line.DiscountAmount?.Amount);
+        Assert.Equal(90m, line.TaxAmount.Amount);
+        Assert.Equal(990m, line.LineTotal.Amount);
     }
 
     #endregion

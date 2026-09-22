@@ -4,6 +4,49 @@
 
 ---
 
+## 🧱 2026-09-22: First real DDD Value Object (Money)
+
+Both READMEs claimed `ValueObjects/`/`Events/` folders and Value Objects/Domain Events
+as part of the architecture; neither ever existed (0 files). Rather than build unused
+Domain Event plumbing speculatively, introduced one concrete, justified Value Object:
+
+- [x] **`ERP.Domain/Common/ValueObjects/Money.cs`** — immutable, guarantees the
+  "amount can't be negative" invariant that was previously re-checked by hand at every
+  call site (e.g. `SalesOrderLine.Create`'s manual `unitPrice < 0` guard). Deliberately
+  doesn't auto-round on construction (`Rounded()` is explicit) so introducing it can't
+  silently change a previously-computed amount. `FromPersistedValue()` is a separate,
+  non-validating factory used only by the EF Core read path, so a historical row that
+  predates this invariant doesn't throw and break the whole query.
+- [x] Applied it to **`SalesOrderLine`** (`UnitPrice`, `DiscountAmount`, `TaxAmount`,
+  `LineTotal`) as the concrete example — chosen because nothing in
+  `ERP.Application`/`ERP.API` reads these fields directly (verified by grep), so the
+  change is fully contained to `ERP.Domain` + one EF Core value-converter registration
+  in `ERPDbContext` (same schema, no migration, same pattern already used for the
+  banking-PII encryption converter). `CalculateTotals()`'s arithmetic is untouched
+  (still plain decimal math) — only wrapped into `Money` at the property boundary, so
+  no computed amount changes for existing behavior.
+- [x] A follow-up review of this same change caught two real issues, both fixed:
+  `DiscountPercent` had no upper-bound validation (`CreateSalesOrderCommandValidator`),
+  so a >100% discount could drive `LineTotal` negative and crash on `Money.Of()` inside
+  `CalculateTotals()` instead of failing validation cleanly — added the missing
+  `InclusiveBetween(0, 100)` rule. And the EF Core read converter originally called the
+  validating `Money.Of()`, which would've thrown on any already-negative historical
+  row the moment a future query does `.Include(Lines)` (none currently does) — switched
+  the read direction to the new non-validating `FromPersistedValue()`.
+- [x] 335 domain + 278 application tests pass (added `MoneyTests.cs` and
+  `DiscountPercent` validator tests; updated `TestSalesEntity.cs`'s two assertions that
+  read `SalesOrderLine.LineTotal`/`TaxAmount`/`DiscountAmount` as raw `decimal`).
+- Not done, and not recommended without a concrete driver: reorganizing
+  `ERP.Domain`/`ERP.Application`/`ERP.Infrastructure`/`ERP.API` into one folder per
+  bounded context (vertical slices) instead of the current layer-per-project split.
+  The current layering already enforces the DDD dependency rule correctly and is
+  already sub-organized per module inside each layer — a full reorg would be a large,
+  risky, mechanical refactor for no functional gain. Extending `Money` (or adding new
+  Value Objects) to the other 16 files with money-like `decimal` fields is a reasonable
+  next step if wanted, but should be done deliberately, module by module, not in bulk.
+
+---
+
 ## 🔧 2026-09-22 Audit: CI Was Fully Broken + Live Security Gaps
 
 Everything below `## 🎯 AI TASK QUEUE` in this file was mostly self-reported as

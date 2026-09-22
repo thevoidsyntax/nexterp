@@ -10,6 +10,7 @@ using ERP.Application.Common.Interfaces;
 using ERP.Domain.Base;
 using ERP.Domain.Common.Configuration;
 using ERP.Domain.Common.Modules;
+using ERP.Domain.Common.ValueObjects;
 using ERP.Domain.Inventory.Entities;
 using ERP.Domain.Accounting.Entities;
 using ERP.Domain.Sales.Entities;
@@ -139,6 +140,23 @@ public class ERPDbContext : DbContext, IApplicationDbContext
 			modelBuilder.Entity<Employee>().Property(e => e.BankAccountNumber).HasConversion(encryptedString);
 			modelBuilder.Entity<Employee>().Property(e => e.BankAccountName).HasConversion(encryptedString);
 		}
+
+		// Money is a Domain value object (ERP.Domain.Common.ValueObjects) stored as a
+		// plain decimal column — same schema as before, no migration needed. Reads use
+		// FromPersistedValue (not Of) so a historical row that predates the "can't be
+		// negative" invariant doesn't throw and break the whole query — it just
+		// round-trips as-is until the line is next saved through the entity.
+		var money = new Microsoft.EntityFrameworkCore.Storage.ValueConversion.ValueConverter<Money, decimal>(
+			m => m.Amount,
+			v => Money.FromPersistedValue(v));
+		var nullableMoney = new Microsoft.EntityFrameworkCore.Storage.ValueConversion.ValueConverter<Money?, decimal?>(
+			m => m.HasValue ? m.Value.Amount : null,
+			v => v.HasValue ? Money.FromPersistedValue(v.Value) : null);
+
+		modelBuilder.Entity<SalesOrderLine>().Property(l => l.UnitPrice).HasConversion(money);
+		modelBuilder.Entity<SalesOrderLine>().Property(l => l.TaxAmount).HasConversion(money);
+		modelBuilder.Entity<SalesOrderLine>().Property(l => l.LineTotal).HasConversion(money);
+		modelBuilder.Entity<SalesOrderLine>().Property(l => l.DiscountAmount).HasConversion(nullableMoney);
 	}
 
 	// Note: Timestamp updates (CreatedAt, UpdatedAt, CreatedBy, UpdatedBy) are handled

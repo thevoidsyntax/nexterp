@@ -55,6 +55,10 @@ public class CreateSalesOrderCommandValidator : AbstractValidator<CreateSalesOrd
             line.RuleFor(l => l.TaxRate)
                 .GreaterThanOrEqualTo(0).WithMessage("Tax rate cannot be negative")
                 .LessThanOrEqualTo(100).WithMessage("Tax rate cannot exceed 100%");
+
+            line.RuleFor(l => l.DiscountPercent)
+                .InclusiveBetween(0, 100).WithMessage("Discount percent must be between 0 and 100")
+                .When(l => l.DiscountPercent.HasValue);
         });
     }
 }
