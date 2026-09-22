@@ -52,6 +52,29 @@ jobs:
       - name: Run TypeScript
         run: npm run build
 
+      - name: Run Jest unit tests
+        run: npm run test:jest
+
+  backend-tests:
+    name: Backend Unit Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Test ERP.Domain
+        run: dotnet test ERP.Domain.UnitTests/ERP.Domain.UnitTests.csproj
+
+      - name: Test ERP.Application
+        run: dotnet test ERP.Application.UnitTests/ERP.Application.UnitTests.csproj
+
   test-e2e:
     name: E2E Tests
     runs-on: ubuntu-latest
@@ -97,18 +120,14 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          # 10.0.x runs the app; 8.0.x is needed by the dotnet-ef tool, which is
-          # pinned to match the EFCore.Design package version below.
-          dotnet-version: |
-            8.0.x
-            10.0.x
+          dotnet-version: '10.0.x'
 
       - name: Restore backend
         run: dotnet restore ERP.API/ERP.API.csproj
 
       - name: Install EF Core CLI tool
         run: |
-          dotnet tool install --global dotnet-ef --version 8.0.0
+          dotnet tool install --global dotnet-ef --version 10.0.12
           echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
 
       - name: Apply database migrations

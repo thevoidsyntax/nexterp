@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
@@ -17,10 +17,9 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="FluentAssertions" Version="6.12.0" />
     <!-- Pact for contract testing -->
-    <PackageReference Include="PactNet" Version="4.1.1" />
-    <PackageReference Include="PactProviderVerifier" Version="0.3.0" />
-    <PackageReference Include="PactFlow.io" Version="0.3.0" />
+    <PackageReference Include="PactNet" Version="5.0.1" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ERP.API\ERP.API.csproj" />

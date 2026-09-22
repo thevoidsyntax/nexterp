@@ -1,3 +1,5 @@
+using Xunit.Abstractions;
+
 namespace ERP.API.ContractTests;
 
 public class ErpApiContractTests : IDisposable
