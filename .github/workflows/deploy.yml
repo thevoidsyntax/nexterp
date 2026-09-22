@@ -25,6 +25,10 @@ jobs:
     name: Deploy Backend
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment || 'production' }}
+    env:
+      # The Railway CLI authenticates every command from this env var directly —
+      # there is no separate `railway login --token` flag on current CLI versions.
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
@@ -33,18 +37,11 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Login to Railway
-        run: |
-          npm install -g @railway/cli
-          railway login --token $RAILWAY_TOKEN
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
 
       - name: Deploy to Railway
-        run: |
-          railway up --service ERP-API --root .
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: railway up --service ERP-API --root .
 
       - name: Set Railway Variables
         run: |
@@ -54,7 +51,6 @@ jobs:
           railway variables set Jwt:RefreshTokenExpirationDays=7
           railway variables set Redis:ConnectionString=$REDIS_CONNECTION_STRING
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
           REDIS_CONNECTION_STRING: ${{ secrets.REDIS_CONNECTION_STRING }}
 
