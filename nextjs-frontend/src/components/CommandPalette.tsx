@@ -27,6 +27,14 @@ export function CommandPalette({ isOpen, onClose, items }: CommandPaletteProps) 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Reset the selected index during render when the query changes, rather
+  // than in an effect (https://react.dev/learn/you-might-not-need-an-effect).
+  const [prevQuery, setPrevQuery] = useState(query);
+  if (query !== prevQuery) {
+    setPrevQuery(query);
+    setSelectedIndex(0);
+  }
+
   const filteredItems = items.filter((item) =>
     item.label.toLowerCase().includes(query.toLowerCase())
   );
@@ -46,10 +54,6 @@ export function CommandPalette({ isOpen, onClose, items }: CommandPaletteProps) 
       inputRef.current.focus();
     }
   }, [isOpen]);
-
-  useEffect(() => {
-    setSelectedIndex(0);
-  }, [query]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

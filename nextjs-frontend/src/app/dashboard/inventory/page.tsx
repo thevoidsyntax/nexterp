@@ -65,8 +65,8 @@ export default function InventoryPage() {
     }
   }, []);
 
-  useEffect(() => { fetchItems(); }, [fetchItems]);
-  useEffect(() => { fetchWarehouses(); }, [fetchWarehouses]);
+  useEffect(() => { queueMicrotask(() => fetchItems()); }, [fetchItems]);
+  useEffect(() => { queueMicrotask(() => fetchWarehouses()); }, [fetchWarehouses]);
 
   // Escape key to close modal
   useEffect(() => {

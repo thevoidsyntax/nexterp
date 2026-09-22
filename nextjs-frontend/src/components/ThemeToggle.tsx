@@ -22,37 +22,35 @@ const themeLabels: Record<Theme, string> = {
   system: 'System',
 };
 
+function applyTheme(newTheme: Theme) {
+  const root = document.documentElement;
+
+  if (newTheme === 'system') {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    root.classList.toggle('dark', prefersDark);
+  } else {
+    root.classList.toggle('dark', newTheme === 'dark');
+  }
+}
+
 export function ThemeToggle({ className }: ThemeToggleProps) {
-  const [theme, setTheme] = useState<Theme>('system');
+  // Read the stored preference lazily so the initial state is correct
+  // without needing an effect just to set it.
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window === 'undefined') return 'system';
+    return (localStorage.getItem('nexterp-theme') as Theme | null) || 'system';
+  });
   const [isOpen, setIsOpen] = useState(false);
 
-  // Initialize theme from localStorage and system preference
+  // Apply the theme to the document whenever it changes — this effect only
+  // synchronizes an external system (the DOM), it doesn't set React state.
   useEffect(() => {
-    const stored = localStorage.getItem('nexterp-theme') as Theme | null;
-    if (stored) {
-      setTheme(stored);
-      applyTheme(stored);
-    } else {
-      setTheme('system');
-      applyTheme('system');
-    }
-  }, []);
-
-  const applyTheme = (newTheme: Theme) => {
-    const root = document.documentElement;
-
-    if (newTheme === 'system') {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      root.classList.toggle('dark', prefersDark);
-    } else {
-      root.classList.toggle('dark', newTheme === 'dark');
-    }
-  };
+    applyTheme(theme);
+  }, [theme]);
 
   const handleThemeChange = (newTheme: Theme) => {
     setTheme(newTheme);
     localStorage.setItem('nexterp-theme', newTheme);
-    applyTheme(newTheme);
     setIsOpen(false);
   };
 

@@ -80,8 +80,10 @@ export default function AccountingPage() {
   }, [page, pageSize, search, toast]);
 
   useEffect(() => {
-    if (activeTab === 'accounts') fetchAccounts();
-    else fetchJournals();
+    queueMicrotask(() => {
+      if (activeTab === 'accounts') fetchAccounts();
+      else fetchJournals();
+    });
   }, [activeTab, fetchAccounts, fetchJournals]);
 
   // Escape key to close modal

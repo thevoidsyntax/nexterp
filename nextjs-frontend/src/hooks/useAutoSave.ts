@@ -64,11 +64,13 @@ export function useAutoSave<T extends Record<string, unknown>>({
   // Check for existing draft on mount
   useEffect(() => {
     if (!enabled) return;
-    const draft = draftStorage.load<T>(formKey);
-    setHasDraft(draft !== null);
-    if (draft) {
-      setLastSavedAt(draft.savedAt);
-    }
+    queueMicrotask(() => {
+      const draft = draftStorage.load<T>(formKey);
+      setHasDraft(draft !== null);
+      if (draft) {
+        setLastSavedAt(draft.savedAt);
+      }
+    });
   }, [formKey, enabled]);
 
   // Save function

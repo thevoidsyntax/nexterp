@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useActivityStore } from '@/stores/activityStore';
 import { PageHeader } from '@/components/PageHeader';
 import { Clock, User, FileText, ShoppingCart, Package, DollarSign, LogIn, LogOut, Edit2, Trash2, Plus, CheckCircle, XCircle } from 'lucide-react';
@@ -86,6 +86,23 @@ export default function ActivityPage() {
     return groups;
   }, [activities]);
 
+  // The current time isn't derivable from props/state, so it's read as an
+  // external value via an effect rather than during render.
+  const [now, setNow] = useState<number | null>(null);
+  useEffect(() => {
+    queueMicrotask(() => setNow(Date.now()));
+  }, [activities]);
+
+  const { todayCount, thisWeekCount } = useMemo(() => {
+    if (now === null) return { todayCount: 0, thisWeekCount: 0 };
+    const today = new Date(now);
+    const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
+    return {
+      todayCount: activities.filter((a) => new Date(a.timestamp).toDateString() === today.toDateString()).length,
+      thisWeekCount: activities.filter((a) => a.timestamp > weekAgo).length,
+    };
+  }, [activities, now]);
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -121,20 +138,13 @@ export default function ActivityPage() {
         />
         <StatCard
           label="Today"
-          value={activities.filter((a) => {
-            const today = new Date();
-            const actDate = new Date(a.timestamp);
-            return actDate.toDateString() === today.toDateString();
-          }).length}
+          value={todayCount}
           icon={User}
           color="bg-green-500"
         />
         <StatCard
           label="This Week"
-          value={activities.filter((a) => {
-            const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-            return a.timestamp > weekAgo;
-          }).length}
+          value={thisWeekCount}
           icon={FileText}
           color="bg-purple-500"
         />

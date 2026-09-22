@@ -6,7 +6,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { SkeletonLoader } from '@/components/SkeletonLoader';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { useToast } from '@/hooks/useToast';
-import { Plus, Search, X, Loader2, ChevronLeft, ChevronRight, FolderKanban, CheckCircle2, Clock, Circle, AlertTriangle, PlayCircle, CheckCircle } from 'lucide-react';
+import { Plus, Search, X, Loader2, ChevronLeft, ChevronRight, FolderKanban, CheckCircle2, Clock, Circle, AlertTriangle, PlayCircle, CheckCircle, type LucideIcon } from 'lucide-react';
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50];
 
@@ -74,8 +74,10 @@ export default function ProjectsPage() {
   }, [page, pageSize, search, toast]);
 
   useEffect(() => {
-    if (activeTab === 'projects') fetchProjects();
-    else fetchTasks();
+    queueMicrotask(() => {
+      if (activeTab === 'projects') fetchProjects();
+      else fetchTasks();
+    });
   }, [activeTab, fetchProjects, fetchTasks]);
 
   // Escape key to close modal
@@ -143,7 +145,7 @@ export default function ProjectsPage() {
     setShowModal(true);
   };
 
-  const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
+  const statusConfig: Record<string, { label: string; color: string; icon: LucideIcon }> = {
     Planning: { label: 'Planning', color: 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300', icon: Circle },
     Active: { label: 'Active', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400', icon: PlayCircle },
     OnHold: { label: 'On Hold', color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400', icon: AlertTriangle },

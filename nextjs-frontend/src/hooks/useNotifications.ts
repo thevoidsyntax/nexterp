@@ -52,10 +52,12 @@ export function useNotifications() {
  * Hook to poll for new notifications (simulated)
  * In production, this would call your notification API
  */
-export function useNotificationPolling(intervalMs = 30000) {
+export function useNotificationPolling(intervalMs = 30000, enabled = true) {
   const { addNotification } = useNotificationStore();
 
   useEffect(() => {
+    if (!enabled) return;
+
     // Simulated polling - in production, replace with actual API call
     const poll = () => {
       // Example: Random notification every few polls (for demo)
@@ -80,5 +82,5 @@ export function useNotificationPolling(intervalMs = 30000) {
 
     const interval = setInterval(poll, intervalMs);
     return () => clearInterval(interval);
-  }, [addNotification, intervalMs]);
+  }, [addNotification, intervalMs, enabled]);
 }

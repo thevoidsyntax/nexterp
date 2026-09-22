@@ -32,30 +32,18 @@ const systemNav = [
   { name: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const { user, isAuthenticated, logout } = useAuthStore();
-  const [collapsed, setCollapsed] = useState(false);
-
-  useEffect(() => {
-    if (!isAuthenticated) router.push('/login');
-  }, [isAuthenticated, router]);
-
-  const handleLogout = () => {
-    logout();
-    router.push('/login');
-  };
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-900">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
-  const NavSection = ({ items, label }: { items: typeof mainNav; label?: string }) => (
+function NavSection({
+  items,
+  label,
+  pathname,
+  collapsed,
+}: {
+  items: typeof mainNav;
+  label?: string;
+  pathname: string | null;
+  collapsed: boolean;
+}) {
+  return (
     <div className="space-y-0.5">
       {label && !collapsed && (
         <div className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">{label}</div>
@@ -80,6 +68,30 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       })}
     </div>
   );
+}
+
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const { user, isAuthenticated, logout } = useAuthStore();
+  const [collapsed, setCollapsed] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthenticated) router.push('/login');
+  }, [isAuthenticated, router]);
+
+  const handleLogout = () => {
+    logout();
+    router.push('/login');
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-slate-900 flex">
@@ -98,12 +110,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* Nav */}
         <nav className="flex-1 py-2 px-1.5 space-y-4 overflow-y-auto">
-          <NavSection items={mainNav} />
+          <NavSection items={mainNav} pathname={pathname} collapsed={collapsed} />
           <div className="border-t border-slate-700/50 pt-2">
-            <NavSection items={modulesNav} />
+            <NavSection items={modulesNav} pathname={pathname} collapsed={collapsed} />
           </div>
           <div className="border-t border-slate-700/50 pt-2">
-            <NavSection items={systemNav} />
+            <NavSection items={systemNav} pathname={pathname} collapsed={collapsed} />
           </div>
         </nav>
 

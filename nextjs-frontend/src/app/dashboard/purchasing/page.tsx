@@ -6,7 +6,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { SkeletonLoader } from '@/components/SkeletonLoader';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { useToast } from '@/hooks/useToast';
-import { Plus, Search, X, Loader2, ChevronLeft, ChevronRight, ShoppingCart, CheckCircle, XCircle, Clock, Truck, Building2 } from 'lucide-react';
+import { Plus, Search, X, Loader2, ChevronLeft, ChevronRight, ShoppingCart, CheckCircle, XCircle, Clock, Truck, Building2, type LucideIcon } from 'lucide-react';
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50];
 
@@ -66,8 +66,8 @@ export default function PurchasingPage() {
     }
   }, []);
 
-  useEffect(() => { fetchOrders(); }, [fetchOrders]);
-  useEffect(() => { fetchSuppliers(); }, [fetchSuppliers]);
+  useEffect(() => { queueMicrotask(() => fetchOrders()); }, [fetchOrders]);
+  useEffect(() => { queueMicrotask(() => fetchSuppliers()); }, [fetchSuppliers]);
 
   // Escape key to close modals
   useEffect(() => {
@@ -117,7 +117,7 @@ export default function PurchasingPage() {
         setCancelConfirm({ isOpen: true, orderId: id, orderNumber });
         return;
       }
-      await (purchaseOrdersApi as any)[action](id);
+      await (action === 'submit' ? purchaseOrdersApi.submit(id) : purchaseOrdersApi.approve(id));
       toast('success', 'Updated!', `Order has been ${action === 'submit' ? 'submitted' : 'approved'}`);
       fetchOrders();
     } catch (err: unknown) {
@@ -127,10 +127,11 @@ export default function PurchasingPage() {
   };
 
   const confirmCancel = () => {
-    if (!cancelConfirm.orderId) return;
+    const orderId = cancelConfirm.orderId;
+    if (!orderId) return;
     (async () => {
       try {
-        await (purchaseOrdersApi as any).cancel(cancelConfirm.orderId);
+        await purchaseOrdersApi.cancel(orderId);
         toast('success', 'Cancelled!', 'Purchase order has been cancelled');
         setCancelConfirm({ isOpen: false, orderId: null, orderNumber: '' });
         fetchOrders();
@@ -156,7 +157,7 @@ export default function PurchasingPage() {
     setShowSupplierModal(true);
   };
 
-  const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
+  const statusConfig: Record<string, { label: string; color: string; icon: LucideIcon }> = {
     Draft: { label: 'Draft', color: 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300', icon: Clock },
     Submitted: { label: 'Submitted', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400', icon: Clock },
     Approved: { label: 'Approved', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400', icon: CheckCircle },

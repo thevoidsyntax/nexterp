@@ -94,8 +94,8 @@ export default function HRMPage() {
     }
   }, []);
 
-  useEffect(() => { fetchEmployees(); }, [fetchEmployees]);
-  useEffect(() => { fetchDepartments(); }, [fetchDepartments]);
+  useEffect(() => { queueMicrotask(() => fetchEmployees()); }, [fetchEmployees]);
+  useEffect(() => { queueMicrotask(() => fetchDepartments()); }, [fetchDepartments]);
 
   // Escape key to close modal
   useEffect(() => {

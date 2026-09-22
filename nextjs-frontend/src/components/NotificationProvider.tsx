@@ -18,10 +18,8 @@ export function NotificationProvider({
   enablePolling = true,
   pollingInterval = 30000,
 }: NotificationProviderProps) {
-  // Enable polling if requested
-  if (enablePolling) {
-    useNotificationPolling(pollingInterval);
-  }
+  // Hooks must run unconditionally; the hook itself no-ops when disabled.
+  useNotificationPolling(pollingInterval, enablePolling);
 
   return (
     <>

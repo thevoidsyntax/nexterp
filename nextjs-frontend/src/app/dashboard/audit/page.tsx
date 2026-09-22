@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { PageHeader } from '@/components/PageHeader';
 import { Search, Filter, Download, ChevronDown, ChevronRight, Clock, User, Package, Eye, Edit2, Trash2, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -72,7 +72,15 @@ export default function AuditPage() {
   const [dateRange, setDateRange] = useState<string>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
+  // The current time isn't derivable from props/state, so it's read as an
+  // external value via an effect rather than during render.
+  const [now, setNow] = useState<number | null>(null);
+  useEffect(() => {
+    queueMicrotask(() => setNow(Date.now()));
+  }, []);
+
   const filteredData = useMemo(() => {
+    if (now === null) return [];
     return mockAuditData.filter((entry) => {
       // Search filter
       if (search) {
@@ -93,7 +101,7 @@ export default function AuditPage() {
 
       // Date filter
       if (dateRange !== 'all') {
-        const diff = Date.now() - entry.timestamp;
+        const diff = now - entry.timestamp;
         switch (dateRange) {
           case 'today':
             if (diff > 24 * 60 * 60 * 1000) return false;
@@ -109,7 +117,7 @@ export default function AuditPage() {
 
       return true;
     });
-  }, [search, filterAction, filterEntity, dateRange]);
+  }, [search, filterAction, filterEntity, dateRange, now]);
 
   const exportAuditLog = () => {
     const columns = [
@@ -166,13 +174,13 @@ export default function AuditPage() {
         />
         <StatCard
           label="Today"
-          value={filteredData.filter((e) => Date.now() - e.timestamp < 86400000).length}
+          value={now === null ? 0 : filteredData.filter((e) => now - e.timestamp < 86400000).length}
           icon={User}
           color="bg-green-500"
         />
         <StatCard
           label="This Week"
-          value={filteredData.filter((e) => Date.now() - e.timestamp < 604800000).length}
+          value={now === null ? 0 : filteredData.filter((e) => now - e.timestamp < 604800000).length}
           icon={Eye}
           color="bg-purple-500"
         />
