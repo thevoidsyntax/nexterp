@@ -15,6 +15,8 @@ namespace ERP.Application.Hrm.Commands.Departments;
 [RequiresPermission("hrm.departments.create")]
 public class CreateDepartmentCommand : ICommand<Guid>
 {
+    // Ignored by the handler, which derives the organization from the
+    // authenticated user; kept only for backward API compatibility.
     public Guid OrganizationId { get; set; }
     public string Name { get; set; } = string.Empty;
     public string? Code { get; set; }
@@ -29,9 +31,6 @@ public class CreateDepartmentCommandValidator : AbstractValidator<CreateDepartme
 {
     public CreateDepartmentCommandValidator()
     {
-        RuleFor(x => x.OrganizationId)
-            .NotEmpty().WithMessage("Organization is required");
-
         RuleFor(x => x.Name)
             .NotEmpty().WithMessage("Department name is required")
             .MaximumLength(100).WithMessage("Department name cannot exceed 100 characters");
@@ -204,6 +203,8 @@ public class UpdateDepartmentCommandHandler : IRequestHandler<UpdateDepartmentCo
 [RequiresPermission("hrm.positions.create")]
 public class CreatePositionCommand : ICommand<Guid>
 {
+    // Ignored by the handler, which derives the organization from the
+    // department; kept only for backward API compatibility.
     public Guid OrganizationId { get; set; }
     public Guid DepartmentId { get; set; }
     public string Title { get; set; } = string.Empty;
@@ -220,9 +221,6 @@ public class CreatePositionCommandValidator : AbstractValidator<CreatePositionCo
 {
     public CreatePositionCommandValidator()
     {
-        RuleFor(x => x.OrganizationId)
-            .NotEmpty().WithMessage("Organization is required");
-
         RuleFor(x => x.DepartmentId)
             .NotEmpty().WithMessage("Department is required");
 

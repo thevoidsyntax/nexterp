@@ -94,7 +94,10 @@ public static class DatabaseSeeder
         }
 
         // ============ DEPARTMENTS ============
-        if (!await context.Departments.AnyAsync())
+        // IgnoreQueryFilters: seeding runs outside an authenticated request, so the
+        // global tenant filter has no organization to scope to and would otherwise
+        // make this existence check always return false.
+        if (!await context.Departments.IgnoreQueryFilters().AnyAsync())
         {
             logger.LogInformation("Seeding departments...");
             await context.Database.ExecuteSqlAsync($@"
@@ -112,7 +115,7 @@ public static class DatabaseSeeder
         }
 
         // ============ POSITIONS ============
-        if (!await context.Positions.AnyAsync())
+        if (!await context.Positions.IgnoreQueryFilters().AnyAsync())
         {
             logger.LogInformation("Seeding positions...");
             await context.Database.ExecuteSqlAsync($@"
@@ -127,7 +130,7 @@ public static class DatabaseSeeder
         }
 
         // ============ WAREHOUSES ============
-        if (!await context.Warehouses.AnyAsync())
+        if (!await context.Warehouses.IgnoreQueryFilters().AnyAsync())
         {
             logger.LogInformation("Seeding warehouses...");
             await context.Database.ExecuteSqlAsync($@"
@@ -139,7 +142,7 @@ public static class DatabaseSeeder
         }
 
         // ============ CUSTOMERS ============
-        if (!await context.Customers.AnyAsync())
+        if (!await context.Customers.IgnoreQueryFilters().AnyAsync())
         {
             logger.LogInformation("Seeding customers...");
             await context.Database.ExecuteSqlAsync($@"
@@ -154,7 +157,7 @@ public static class DatabaseSeeder
         }
 
         // ============ SUPPLIERS ============
-        if (!await context.Suppliers.AnyAsync())
+        if (!await context.Suppliers.IgnoreQueryFilters().AnyAsync())
         {
             logger.LogInformation("Seeding suppliers...");
             await context.Database.ExecuteSqlAsync($@"
@@ -391,7 +394,7 @@ public static class DatabaseSeeder
         }
 
         // ============ DEFAULT ORGANIZATION SETTINGS ============
-        if (!await context.OrganizationSettings.AnyAsync())
+        if (!await context.OrganizationSettings.IgnoreQueryFilters().AnyAsync())
         {
             logger.LogInformation("Seeding default organization settings...");
 

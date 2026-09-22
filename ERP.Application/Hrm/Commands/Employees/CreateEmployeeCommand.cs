@@ -18,6 +18,8 @@ namespace ERP.Application.Hrm.Commands.Employees;
 public class CreateEmployeeCommand : ICommand<Guid>
 {
     public Guid UserId { get; set; }
+    // Ignored by the handler, which derives the organization from the
+    // authenticated user; kept only for backward API compatibility.
     public Guid OrganizationId { get; set; }
     public string EmployeeNumber { get; set; } = string.Empty;
     public string FirstName { get; set; } = string.Empty;

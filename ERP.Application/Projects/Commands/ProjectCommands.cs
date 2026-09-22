@@ -16,6 +16,8 @@ namespace ERP.Application.Projects.Commands;
 [RequiresPermission("projects.projects.create")]
 public class CreateProjectCommand : ICommand<Guid>
 {
+    // Ignored by the handler, which derives the organization from the
+    // authenticated user; kept only for backward API compatibility.
     public Guid OrganizationId { get; set; }
     public string Name { get; set; } = string.Empty;
     public string? Code { get; set; }
@@ -110,6 +112,8 @@ public class CreateProjectCommandHandler : IRequestHandler<CreateProjectCommand,
 [RequiresPermission("projects.tasks.create")]
 public class CreateProjectTaskCommand : ICommand<Guid>
 {
+    // Ignored by the handler, which derives the organization from the
+    // parent project; kept only for backward API compatibility.
     public Guid OrganizationId { get; set; }
     public Guid ProjectId { get; set; }
     public Guid? ParentTaskId { get; set; }

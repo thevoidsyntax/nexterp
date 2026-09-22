@@ -36,10 +36,13 @@ public class CreateAuditLogHandler : IRequestHandler<CreateAuditLogCommand, Guid
     {
         // Organization is taken from the authenticated user's context, not the
         // request body, so a caller cannot forge audit entries into another org.
+        var organizationId = _currentUser.OrganizationId
+            ?? throw new InvalidOperationException("User is not associated with an organization");
+
         var auditLog = new AuditLog
         {
             Id = Guid.NewGuid(),
-            OrganizationId = _currentUser.OrganizationId ?? request.OrganizationId,
+            OrganizationId = organizationId,
             UserId = request.UserId,
             Module = request.Module,
             Action = request.Action,

@@ -26,6 +26,8 @@ public record CalculatePayrollPreviewCommand(
 /// </summary>
 [RequiresPermission("hrm.payroll.manage")]
 public record CreatePayrollCommand(
+    // Ignored by the handler, which derives the organization from the
+    // authenticated user; kept only for backward API compatibility.
     Guid OrganizationId,
     Guid EmployeeId,
     int Year,
@@ -43,6 +45,8 @@ public record CreatePayrollCommand(
 /// </summary>
 [RequiresPermission("hrm.payroll.manage")]
 public record CreateBatchPayrollCommand(
+    // Ignored by the handler, which derives the organization from the
+    // authenticated user; kept only for backward API compatibility.
     Guid OrganizationId,
     Guid? DepartmentId,
     int Year,
@@ -106,9 +110,6 @@ public class CreatePayrollCommandValidator : AbstractValidator<CreatePayrollComm
 {
     public CreatePayrollCommandValidator()
     {
-        RuleFor(x => x.OrganizationId)
-            .NotEmpty().WithMessage("Organization ID is required");
-
         RuleFor(x => x.EmployeeId)
             .NotEmpty().WithMessage("Employee ID is required");
 
