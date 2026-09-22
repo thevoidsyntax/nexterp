@@ -1,16 +1,16 @@
 # NEXTERP API - Development Dockerfile
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-# Copy solution and project files first for better caching
-COPY ["*.sln", "./"]
+# Copy project files first for better layer caching
 COPY ["ERP.API/*.csproj", "ERP.API/"]
 COPY ["ERP.Application/*.csproj", "ERP.Application/"]
 COPY ["ERP.Domain/*.csproj", "ERP.Domain/"]
 COPY ["ERP.Infrastructure/*.csproj", "ERP.Infrastructure/"]
 
-# Restore dependencies
-RUN dotnet restore
+# Restore dependencies (no .sln in this repo — restore the API project directly,
+# which pulls in its ProjectReferences)
+RUN dotnet restore ERP.API/ERP.API.csproj
 
 # Copy source code
 COPY . .
@@ -27,7 +27,7 @@ FROM build AS publish
 RUN dotnet publish -c Release -o /app/publish
 
 # Runtime
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 
 # Install curl for health checks

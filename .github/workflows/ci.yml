@@ -4,10 +4,14 @@ on:
   push:
     branches: ['*']
   pull_request:
-    branches: [main, develop]
+    branches: [master]
 
 env:
   NODE_VERSION: '20'
+
+defaults:
+  run:
+    working-directory: nextjs-frontend
 
 jobs:
   lint:
@@ -21,7 +25,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: nextjs-frontend/package-lock.json'
+          cache-dependency-path: nextjs-frontend/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -40,7 +44,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: nextjs-frontend/package-lock.json'
+          cache-dependency-path: nextjs-frontend/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -60,7 +64,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: nextjs-frontend/package-lock.json'
+          cache-dependency-path: nextjs-frontend/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -76,7 +80,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
-          path: playwright-report/
+          path: nextjs-frontend/playwright-report/
           retention-days: 7
 
       - name: Upload Playwright Test Results
@@ -84,5 +88,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-results
-          path: test-results/
+          path: nextjs-frontend/test-results/
           retention-days: 7

@@ -31,12 +31,12 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: '10.0.x'
 
       - name: Login to Railway
         run: |
           npm install -g @railway/cli
-          railway login --token $${{ secrets.RAILWAY_TOKEN }}
+          railway login --token $RAILWAY_TOKEN
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
@@ -49,12 +49,14 @@ jobs:
       - name: Set Railway Variables
         run: |
           railway variables set ASPNETCORE_ENVIRONMENT=Production
-          railway variables set Jwt:SecretKey=$${{ secrets.JWT_SECRET_KEY }}
+          railway variables set Jwt:SecretKey=$JWT_SECRET_KEY
           railway variables set Jwt:AccessTokenExpirationMinutes=15
           railway variables set Jwt:RefreshTokenExpirationDays=7
-          railway variables set Redis:ConnectionString=$${{ secrets.REDIS_CONNECTION_STRING }}
+          railway variables set Redis:ConnectionString=$REDIS_CONNECTION_STRING
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+          REDIS_CONNECTION_STRING: ${{ secrets.REDIS_CONNECTION_STRING }}
 
       - name: Wait for deployment
         run: sleep 20
@@ -70,6 +72,9 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment || 'production' }}
     needs: [deploy-backend]
+    defaults:
+      run:
+        working-directory: nextjs-frontend
     steps:
       - uses: actions/checkout@v4
 
