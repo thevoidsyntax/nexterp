@@ -8,7 +8,6 @@ public class RateLimitingMiddleware
 {
 	private readonly RequestDelegate _next;
 	private readonly ILogger<RateLimitingMiddleware> _logger;
-	private readonly IRateLimitService _rateLimitService;
 
 	private const int AnonymousLimit = 100;  // requests per minute
 	private const int AuthenticatedLimit = 1000; // requests per minute
@@ -16,15 +15,19 @@ public class RateLimitingMiddleware
 
 	public RateLimitingMiddleware(
 		RequestDelegate next,
-		ILogger<RateLimitingMiddleware> logger,
-		IRateLimitService rateLimitService)
+		ILogger<RateLimitingMiddleware> logger)
 	{
 		_next = next;
 		_logger = logger;
-		_rateLimitService = rateLimitService;
 	}
 
-	public async Task InvokeAsync(HttpContext context)
+	// IRateLimitService is Scoped (RedisRateLimitService/InMemoryRateLimitService), but
+	// middleware is constructed once from the root container — injecting a Scoped
+	// service into the constructor instead of here crashes on startup in Development
+	// (ASP.NET Core validates scopes there) and silently runs it as a de-facto
+	// singleton in Production. InvokeAsync parameters are resolved from the current
+	// request's scope, which is the correct place for this.
+	public async Task InvokeAsync(HttpContext context, IRateLimitService rateLimitService)
 	{
 		var clientIp = GetClientIp(context);
 		var userId = context.User?.Identity?.Name ?? "anonymous";
@@ -32,7 +35,7 @@ public class RateLimitingMiddleware
 
 		var limit = context.User?.Identity?.IsAuthenticated == true ? AuthenticatedLimit : AnonymousLimit;
 
-		var result = await _rateLimitService.CheckRateLimitAsync(key, limit, WindowSeconds);
+		var result = await rateLimitService.CheckRateLimitAsync(key, limit, WindowSeconds);
 
 		// Add rate limit headers
 		context.Response.OnStarting(() =>

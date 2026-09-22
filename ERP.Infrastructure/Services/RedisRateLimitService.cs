@@ -54,7 +54,7 @@ public class RedisRateLimitService : IRateLimitService
 					redis.call('ZADD', KEYS[1], ARGV[2], ARGV[2] .. ':' .. count)
 					redis.call('EXPIRE', KEYS[1], ARGV[4])
 				end
-				return {count, ARGV[3], ARGV[1] + ARGV[4]}
+				return {count, ARGV[3], ARGV[2] + ARGV[4]}
 			";
 
 			var result = await db.ScriptEvaluateAsync(

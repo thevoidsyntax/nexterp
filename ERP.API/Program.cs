@@ -229,8 +229,14 @@ builder.Services.AddScoped<IReportService, ReportService>();
 // Brute force protection for login
 builder.Services.AddScoped<ILoginRateLimitService, LoginRateLimitService>();
 
-// Global rate limiting service (in-memory fallback — Redis used when available)
-builder.Services.AddScoped<IRateLimitService, InMemoryRateLimitService>();
+// Global rate limiting service: Redis-backed (shared across instances) outside
+// Development, in-memory in Development so `dotnet run` works without Redis running.
+// RedisRateLimitService existed but was never registered here, so every environment
+// was silently using in-memory limits regardless of this comment's previous claim.
+if (builder.Environment.IsDevelopment())
+    builder.Services.AddScoped<IRateLimitService, InMemoryRateLimitService>();
+else
+    builder.Services.AddScoped<IRateLimitService, RedisRateLimitService>();
 
 // Redis caching service
 builder.Services.AddScoped<ICacheService, RedisCacheService>();
@@ -520,9 +526,6 @@ app.UseCors();
 // Structured request logging with correlation ID
 app.UseSerilogRequestLogging();
 
-// Rate limiting middleware
-app.UseRateLimiting();
-
 // Add Correlation ID to all requests
 app.Use(async (context, next) =>
 {
@@ -540,6 +543,13 @@ app.UseHttpMetrics(options =>
 });
 
 app.UseAuthentication();
+
+// Rate limiting middleware — must run after UseAuthentication (not before, as it
+// previously was) so context.User.Identity.IsAuthenticated reflects the actual
+// caller instead of always being false, which silently capped every request —
+// authenticated or not — at the anonymous limit.
+app.UseRateLimiting();
+
 app.UseAuthorization();
 
 // Map endpoints
