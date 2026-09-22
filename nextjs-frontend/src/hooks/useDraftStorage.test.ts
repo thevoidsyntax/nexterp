@@ -163,8 +163,9 @@ describe('useDraftStorage', () => {
 
       draftStorage.clearAll();
 
+      // Removes each indexed draft plus the index itself — not a blanket
+      // localStorage.clear(), which would also wipe unrelated app data.
       expect(localStorageMock.removeItem).toHaveBeenCalledTimes(3);
-      expect(localStorageMock.clear).toHaveBeenCalled();
     });
   });
 });

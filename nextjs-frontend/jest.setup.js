@@ -1,4 +1,5 @@
-import '@testing-library/jest-dom';
+// eslint-disable-next-line @typescript-eslint/no-require-imports -- this file runs as CommonJS under Jest
+require('@testing-library/jest-dom');
 
 // Mock next/navigation
 jest.mock('next/navigation', () => ({
