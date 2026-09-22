@@ -39,7 +39,7 @@ export default function TransfersPage() {
               <ArrowRight className="w-4 h-4 text-slate-400" />
               <span className="text-slate-700 dark:text-slate-300">{t.toWarehouse}</span>
             </div>
-            <span className={cn('px-2 py-1 text-xs rounded-full capitalize', statusColor[t.status])>{t.status}</span>
+            <span className={cn('px-2 py-1 text-xs rounded-full capitalize', statusColor[t.status])}>{t.status}</span>
             <span className="font-mono text-slate-700 dark:text-slate-300">×{t.quantity}</span>
           </div>
         ))}

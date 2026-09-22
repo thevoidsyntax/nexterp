@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { within, userEvent } from '@storybook/testing-library';
+import { within, userEvent, expect } from '@storybook/test';
 
 const meta = { title: 'Forms/Button', component: null };
 
@@ -14,7 +14,7 @@ export const Primary: StoryObj = {
   },
 };
 
-export const Secondary: StoryObj = { args: { label: 'Cancel', variant: 'secondary' };
-export const Danger: StoryObj = { args: { label: 'Delete', variant: 'danger' };
-export const Loading: StoryObj = { args: { label: 'Loading', loading: true };
-export const Disabled: StoryObj = { args: { label: 'Disabled', disabled: true };
+export const Secondary: StoryObj = { args: { label: 'Cancel', variant: 'secondary' } };
+export const Danger: StoryObj = { args: { label: 'Delete', variant: 'danger' } };
+export const Loading: StoryObj = { args: { label: 'Loading', loading: true } };
+export const Disabled: StoryObj = { args: { label: 'Disabled', disabled: true } };

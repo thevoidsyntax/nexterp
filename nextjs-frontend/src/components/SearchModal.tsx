@@ -110,7 +110,7 @@ export function SearchModal() {
                     i === selectedIndex ? 'bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-slate-50 dark:hover:bg-slate-700/50'
                   )}
                 >
-                  <div className={cn('p-1.5 rounded', config.color}>
+                  <div className={cn('p-1.5 rounded', config.color)}>
                     <Icon className="w-4 h-4" />
                   </div>
                   <div className="flex-1 min-w-0">
