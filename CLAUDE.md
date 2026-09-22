@@ -59,11 +59,20 @@ NEXT_PUBLIC_API_URL=https://api-production-ab1b.up.railway.app
 **Backend (Railway env vars):**
 ```
 ConnectionStrings__DefaultConnection=...
+Redis__ConnectionString=...
 JwtSettings__SecretKey=...
 JwtSettings__AccessTokenExpiryMinutes=15
 JwtSettings__RefreshTokenExpiryDays=7
 ```
 
+Demo/sample data (including the `admin` account) is only ever seeded in `Development`,
+or in another environment if you explicitly opt in — see `TODO.md`'s 2026-09-22 audit
+entry before setting these on a real deployment:
+```
+SEED_DEMO_DATA=true   # opt-in outside Development; omit in production
+DEMO_PASSWORD=...     # required if SEED_DEMO_DATA=true outside Development
+```
+
 ---
 
-*Last updated: 2026-08-19*
+*Last updated: 2026-09-22*

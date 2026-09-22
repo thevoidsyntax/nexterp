@@ -1,6 +1,149 @@
 # NEXTERP ERP - Project TODO & Documentation
 
-> Last Updated: 2026-08-20
+> Last Updated: 2026-09-22
+
+---
+
+## 🔧 2026-09-22 Audit: CI Was Fully Broken + Live Security Gaps
+
+Everything below `## 🎯 AI TASK QUEUE` in this file was mostly self-reported as
+"COMPLETED"/"READY" by earlier passes. An independent audit (reading the actual code,
+running the actual builds/tests, checking actual `gh run list` history) found that
+**every CI and Deploy run on `master` had been failing** and several of the claimed
+"COMPLETED" security items were not actually in effect. This section is ground-truth,
+verified by running the build/tests, not self-reported.
+
+### Fixed this pass
+- [x] **CI was failing on every single push.** Root cause: `TargetFramework` had been
+  bumped to `net10.0` across all main projects, but all three test projects
+  (`ERP.Application.UnitTests`, `ERP.Domain.UnitTests`, `ERP.API.ContractTests`) were
+  still `net8.0` (couldn't even restore — `NU1201`), and CI's `dotnet-ef` tool was
+  pinned to `8.0.0` while `Microsoft.EntityFrameworkCore.Design` stayed on `8.0.0` too —
+  so `dotnet ef database update` failed every run with
+  `Could not load file or assembly 'System.Runtime, Version=10.0.0.0'`. Fixed by
+  bumping all test projects to `net10.0`, upgrading EF Core/Npgsql/JwtBearer packages
+  to `10.0.12`/`10.0.3`, and bumping CI's `dotnet-ef` tool to `10.0.12`
+  (`.github/workflows/ci.yml`). **597 backend unit tests now build and pass** (0 could
+  even compile before). Added a `backend-tests` CI job so this can't silently regress
+  again.
+- [x] **Frontend `jest` tests were never actually runnable.** `jest.config.js`,
+  `jest.setup.js`, and 3 real test files existed, but `jest`/`ts-jest`/
+  `jest-environment-jsdom`/`identity-obj-proxy`/`@testing-library/react`/
+  `@testing-library/jest-dom` were never added to `package.json` — `npm run test:jest`
+  just failed with `jest: not found`. Added the missing devDependencies, fixed
+  `jest.setup.js` (had ESM `import` in a CommonJS-run file), and fixed one stale test
+  assertion in `useDraftStorage.test.ts` that expected `localStorage.clear()` even
+  though the real (safer) implementation only removes its own keys. **25/25 Jest tests
+  now pass.** Added a Jest step to the CI `typecheck` job.
+- [x] **Vulnerable dependencies.** Next.js `16.0.0–16.3.2` had a critical unauthenticated
+  RCE advisory (GHSA-p293-qw3h-jr36, GHSA-2xp9-vwfh-vxw4) → bumped to `16.3.5`. The
+  backend `Npgsql`/`SQLitePCLRaw`/`Microsoft.Extensions.Caching.Memory` NU1903
+  high-severity advisories were transitive from EF Core `8.0.0` → resolved by the EF
+  Core upgrade above. `npm audit --omit=dev` and `dotnet build` are both clean now.
+- [x] **Cross-tenant IDOR/leak across the entire Roles + Users + Organization-modules
+  surface.** `Role` and `User` are (intentionally, for login to work) excluded from
+  `ERPDbContext`'s global tenant query filter, and the following handlers trusted a
+  client-supplied `OrganizationId` (query string, path param, or body) instead of the
+  authenticated session — meaning any authenticated "Admin" could read or modify
+  **another organization's** roles/users/permissions/enabled-modules just by changing an
+  ID in the request:
+  - `CreateRoleCommand`, `UpdateRoleCommand`, `DeleteRoleCommand`,
+    `AddRolePermissionsCommand`, `RemoveRolePermissionsCommand`, `GetRolesQuery`,
+    `GetRoleByIdQuery` (`ERP.Application/Base/{Commands,Queries}/Roles/`)
+  - `CreateUserCommandHandler`, `AssignUserRolesCommand`, `GetUserByIdQuery`,
+    `GetUsersPaginatedQuery` (`ERP.Application/Base/{Commands,Queries}/Users/`) — the
+    paginated list query was the worst of these: an **unfiltered `GET /api/v1/users`
+    returned every user across every organization** in the platform.
+  - `EnableOrganizationModuleCommand`, `DisableOrganizationModuleCommand`,
+    `GetOrganizationModulesQuery` (`ERP.Application/Common/{Commands,Queries}/Organizations/`)
+    — route allows role `Admin`, not just `SuperAdmin`, so any org's Admin could
+    enable/disable/view another org's licensed modules via the URL.
+  All now derive the organization from `ICurrentUserService` (SuperAdmin still permitted
+  to act cross-org where that's the intended platform-admin behavior). This is the same
+  bug class flagged as a partial fix in the previous "Security Hardening" pass below —
+  that pass covered `CreateUserCommand`/`CreateRoleCommand`'s client-trust issue but not
+  the sibling Update/Delete/permissions/list handlers, nor the module-management gap.
+  Not exhaustively re-audited beyond this surface (Sales/Purchasing/Accounting/etc. were
+  covered in the prior pass and weren't re-checked here).
+- [x] **Demo admin account silently reset in production on every restart.**
+  `ERP.API/Program.cs` unconditionally (re)created the `admin` user and reset its
+  password hash to `DevPassword2024!` on *every* app startup in *every* environment
+  unless `DEMO_PASSWORD` was set — and `DEMO_PASSWORD` was never in the documented
+  Railway env var list, so production was very likely running with this known default
+  password, silently re-applied on every redeploy even if someone had changed it. Now
+  gated behind `IsDevelopment()` or an explicit `SEED_DEMO_DATA=true` **and**
+  `DEMO_PASSWORD` opt-in (see `CLAUDE.md`).
+- [x] **Employee banking PII stored in plaintext.** `Employee.BankName` /
+  `BankAccountNumber` / `BankAccountName` were flagged
+  `// SECURITY: should be encrypted` since day one but nothing implemented it. Added
+  `IEncryptionService` (ASP.NET Core Data Protection, keys persisted to Redis so they
+  survive Railway's ephemeral container redeploys — see `Program.cs`), wired into
+  `ERPDbContext` as an EF Core value converter on those three columns. Verified
+  encrypt/decrypt round-trips correctly. Old plaintext rows still read fine (decrypt
+  falls back to passthrough on non-protected input) and get encrypted on next save — no
+  data migration needed since the columns were already unbounded `text`.
+
+### Follow-up code review (same day) caught a real regression in the above
+- [x] **`GetUsersPaginatedQueryHandler` fail-open bug.** The IDOR fix above computed
+  `organizationFilter = IsSuperAdmin ? request.OrganizationId : _currentUser.OrganizationId`
+  and only applied a `.Where()` when it had a value — so a non-SuperAdmin whose token
+  somehow carried no/an unparseable `org` claim got the query with **no org filter at
+  all** (every user, every org) instead of being denied. Its sibling
+  `GetUserByIdQueryHandler` already failed closed correctly (`user.OrganizationId !=
+  _currentUser.OrganizationId` is `true` when the right side is `null`, since a real
+  Guid never equals null) — this one didn't. Fixed to explicitly fail when a
+  non-SuperAdmin has no `OrganizationId`.
+- [x] **Dropped organization-existence check.** `CreateRoleCommandHandler` and
+  `CreateUserCommandHandler` used to verify `_context.Organizations.AnyAsync(o => o.Id
+  == request.OrganizationId && !o.IsDeleted)` before proceeding; deriving the org from
+  `ICurrentUserService` instead of the request dropped that check entirely. Restored it
+  against the trusted `organizationId` (not the client-supplied value) — closes the
+  (narrow, ≤ access-token-lifetime) window where a user whose org gets soft-deleted
+  mid-session could still create roles/users under it.
+- [ ] **Not fixed, flagged for a deliberate follow-up:** the IDOR fix is ~10 handlers of
+  copy-pasted `if (_currentUser.OrganizationId == null) return Failure(...)` boilerplate
+  instead of one shared mechanism — which is exactly how the fail-open bug above crept
+  in (one copy took a different, unsafe shape). This codebase already has a MediatR
+  pipeline-behavior pattern for cross-cutting authorization
+  (`PermissionAuthorizationBehavior`, `ModuleAuthorizationBehavior` in
+  `ERP.Application/Common/Behaviors/`) — a `TenantScopeBehavior` following the same
+  pattern would close this class of bug at the framework level instead of per-handler.
+  Left as a recommendation rather than done here: it's an architecture change (new
+  marker interface, touches every Role/User request DTO) that deserves its own review,
+  not something to fold into a bug-fix pass.
+- [ ] **Noted, not changed:** Redis connection setup went from a lazily-resolved DI
+  factory to an eager `ConnectionMultiplexer.Connect()` at startup (needed so
+  `PersistKeysToStackExchangeRedis` and the DI singleton share one instance). Since
+  Redis is already required infrastructure here (caching, rate limiting, health checks
+  all depend on it) this just moves an unavoidable connection cost earlier rather than
+  introducing a new one — acceptable, but worth knowing if Railway/Redis cold-starts
+  ever show up as slow app boot times.
+
+### Still broken / needs your action (couldn't fix without credentials or much bigger scope)
+- [ ] **Railway auto-deploy is broken right now.** The `RAILWAY_TOKEN` GitHub secret is
+  invalid/expired — `gh run view` shows `Invalid RAILWAY_TOKEN. Please check that it is
+  valid and has access to the resource you're trying to use.` on the latest push. Needs
+  a new token from the Railway dashboard, set via `gh secret set RAILWAY_TOKEN`.
+- [ ] **`ERP.API.ContractTests` has never compiled, since its initial commit.** It
+  referenced two NuGet packages that don't exist on nuget.org at all
+  (`PactProviderVerifier`, `PactFlow.io`), and the test bodies are written against a
+  PactNet API that doesn't match any released version (checked both 4.5.0 and 5.0.1 —
+  same ~40 compile errors on both, e.g. `IPactBuilder.UponReceiving`/`.Build()` don't
+  exist). Removed the two phantom packages and fixed the two easy issues (missing
+  `FluentAssertions` reference, missing `using Xunit.Abstractions;`), but
+  `Consumer/AuthConsumerContractTests.cs` and `Provider/ErpApiProviderContractTests.cs`
+  need a real rewrite against PactNet 5.x's actual API to ever compile. Not wired into
+  CI either way (`ci.yml` never references it), so it isn't currently blocking anything
+  — just dead code.
+- [ ] **Email/SMS notifications are stubs.** `NotificationGateway.cs` just logs and
+  returns success — no SendGrid/Twilio/SES integration. Needs real provider API keys
+  before this can be built for real.
+- [ ] **No real-time notifications.** SignalR/WebSocket push was never implemented
+  (frontend polls every 30s instead), despite being marked `⚠️ COMPLEX` (not `READY`)
+  under Phase 12 below — that flag was accurate.
+- [ ] The cross-tenant fixes above have no regression test coverage — there's no
+  existing pattern in this repo for testing a MediatR handler against a mocked/in-memory
+  `IApplicationDbContext` + `ICurrentUserService`, so none was added. Worth setting up.
 
 ---
 
