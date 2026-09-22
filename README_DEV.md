@@ -33,7 +33,7 @@
                                   ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                        DOMAIN LAYER                        │
-│   Entities  │  Value Objects  │  Domain Events  │  Enums │
+│              Entities  │  Enums  │  Interfaces             │
 │   ⚠️ NO external dependencies - pure business logic       │
 └─────────────────────────────────────────────────────────────┘
                                   │
@@ -163,9 +163,7 @@ nexterp/
 │   ├── Common/                 # Shared domain types
 │   └── [Domain]/              # Feature domains
 │       ├── Entities/           # Domain entities
-│       ├── ValueObjects/       # Immutable value types
-│       ├── Enums/             # Domain enums
-│       └── Events/             # Domain events
+│       └── Enums/             # Domain enums
 │
 ├── ERP.Infrastructure/          # Infrastructure Layer
 │   ├── Data/                   # DbContext, Configurations

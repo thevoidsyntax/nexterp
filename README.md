@@ -33,7 +33,7 @@ EF Core global query filter — see [Multi-tenancy & permissions](#multi-tenancy
 nexterp/
 ├── ERP.API/              # REST API — controllers, Program.cs, middleware
 ├── ERP.Application/      # CQRS commands/queries, validators, permission attributes
-├── ERP.Domain/           # Entities, value objects, enums — no external dependencies
+├── ERP.Domain/           # Entities, enums — no external dependencies
 ├── ERP.Infrastructure/   # EF Core DbContext, tenant query filters, JWT/Redis services
 ├── ERP.API.ContractTests/
 ├── ERP.Application.UnitTests/
