@@ -29,13 +29,16 @@ public class ERPDbContext : DbContext, IApplicationDbContext
 {
 	private readonly ITenantContext? _tenantContext;
 	private readonly Guid? _currentTenantId;
+	private readonly IEncryptionService? _encryptionService;
 
-	// Constructor for normal DI (ITenantContext is resolved from the request scope);
-	// tenantContext is null for design-time/migration tooling, which passes it explicitly.
-	public ERPDbContext(DbContextOptions<ERPDbContext> options, ITenantContext? tenantContext = null) : base(options)
+	// Constructor for normal DI (ITenantContext/IEncryptionService are resolved from the
+	// request scope); both are null for design-time/migration tooling, which passes them
+	// explicitly (see DesignTimeDbContextFactory).
+	public ERPDbContext(DbContextOptions<ERPDbContext> options, ITenantContext? tenantContext = null, IEncryptionService? encryptionService = null) : base(options)
 	{
 		_tenantContext = tenantContext;
 		_currentTenantId = tenantContext?.HasTenant == true ? tenantContext.TenantId : null;
+		_encryptionService = encryptionService;
 	}
 
 	// Base entities
@@ -121,6 +124,21 @@ public class ERPDbContext : DbContext, IApplicationDbContext
 
 		// Apply global query filters
 		ApplyGlobalFilters(modelBuilder);
+
+		// Encrypt employee banking PII at rest (see Employee.cs SECURITY comment).
+		// Values written before encryption was enabled decrypt as a no-op passthrough
+		// (see DataProtectionEncryptionService), so existing plaintext rows stay readable
+		// and get encrypted the next time they're saved.
+		if (_encryptionService is { } encryption)
+		{
+			var encryptedString = new Microsoft.EntityFrameworkCore.Storage.ValueConversion.ValueConverter<string?, string?>(
+				v => v == null ? null : encryption.Encrypt(v),
+				v => v == null ? null : encryption.Decrypt(v));
+
+			modelBuilder.Entity<Employee>().Property(e => e.BankName).HasConversion(encryptedString);
+			modelBuilder.Entity<Employee>().Property(e => e.BankAccountNumber).HasConversion(encryptedString);
+			modelBuilder.Entity<Employee>().Property(e => e.BankAccountName).HasConversion(encryptedString);
+		}
 	}
 
 	// Note: Timestamp updates (CreatedAt, UpdatedAt, CreatedBy, UpdatedBy) are handled

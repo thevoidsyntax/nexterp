@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
@@ -183,13 +184,19 @@ builder.Services.AddScoped<ERP.Application.Common.Security.IDataMaskingService>(
     new ERP.Application.Common.Security.DataMaskingService());
 
 // Add Redis
-builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
-{
-    var configuration = ConfigurationOptions.Parse(
-        builder.Configuration["Redis:ConnectionString"] ?? "localhost:6379");
-    configuration.AbortOnConnectFail = false;
-    return ConnectionMultiplexer.Connect(configuration);
-});
+var redisConfiguration = ConfigurationOptions.Parse(
+    builder.Configuration["Redis:ConnectionString"] ?? "localhost:6379");
+redisConfiguration.AbortOnConnectFail = false;
+var redisMultiplexer = ConnectionMultiplexer.Connect(redisConfiguration);
+builder.Services.AddSingleton<IConnectionMultiplexer>(redisMultiplexer);
+
+// Data Protection keys must survive restarts/redeploys and be shared across instances
+// (Railway containers are ephemeral), otherwise encrypted PII becomes undecryptable the
+// moment the key ring is lost. Persist to Redis instead of the default local file system.
+builder.Services.AddDataProtection()
+    .SetApplicationName("Nexterp")
+    .PersistKeysToStackExchangeRedis(redisMultiplexer, "DataProtection-Keys");
+builder.Services.AddSingleton<IEncryptionService, DataProtectionEncryptionService>();
 
 // Add MediatR
 builder.Services.AddMediatR(cfg =>
@@ -323,10 +330,6 @@ using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<ERPDbContext>();
     var logger = scope.ServiceProvider.GetService<ILogger<Program>>();
-    // Use configurable demo password from env var with fallback for local dev
-    // BCrypt cost factor 12 for production security
-    var demoPasswordHash = BCrypt.Net.BCrypt.HashPassword(
-        Environment.GetEnvironmentVariable("DEMO_PASSWORD") ?? "DevPassword2024!", 12);
 
     try
     {
@@ -338,6 +341,28 @@ using (var scope = app.Services.CreateScope())
             ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""RefreshTokenExpiry"" timestamp with time zone;
         ");
         logger.LogInformation("Database schema fixes applied successfully");
+
+        // Demo/sample data (including a default admin account) is only ever seeded in
+        // Development, or when explicitly opted into via SEED_DEMO_DATA=true together
+        // with an explicit DEMO_PASSWORD. This block used to run — and reset the demo
+        // admin's password — on every single startup in every environment, so a
+        // production deploy without DEMO_PASSWORD set would silently (re-)provision an
+        // admin account with the well-known password "DevPassword2024!".
+        var demoPasswordOverride = Environment.GetEnvironmentVariable("DEMO_PASSWORD");
+        var seedDemoDataOptIn = Environment.GetEnvironmentVariable("SEED_DEMO_DATA") == "true";
+        var shouldSeedDemoData = app.Environment.IsDevelopment()
+            || (seedDemoDataOptIn && !string.IsNullOrEmpty(demoPasswordOverride));
+
+        if (!shouldSeedDemoData)
+        {
+            if (seedDemoDataOptIn)
+                logger.LogWarning("SEED_DEMO_DATA is set but DEMO_PASSWORD is not — skipping demo data seeding to avoid provisioning an admin account with a default password.");
+            else
+                logger.LogInformation("Skipping demo data seeding (not Development and SEED_DEMO_DATA is not set).");
+        }
+        else
+        {
+        var demoPasswordHash = BCrypt.Net.BCrypt.HashPassword(demoPasswordOverride ?? "DevPassword2024!", 12);
 
         // Ensure demo organization exists
         var demoOrgId = Guid.Parse("00000000-0000-0000-0000-000000000001");
@@ -457,8 +482,6 @@ using (var scope = app.Services.CreateScope())
             ");
         }
 
-        logger.LogInformation("Demo data ensured successfully");
-
         // Seed Organization License
         await dbContext.Database.ExecuteSqlRawAsync($@"
             INSERT INTO ""OrganizationLicenses"" (""Id"", ""OrganizationId"", ""LicenseTierId"", ""StartDate"", ""EndDate"", ""MaxUsers"", ""IsAutoRenew"", ""BillingEmail"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"")
@@ -467,6 +490,7 @@ using (var scope = app.Services.CreateScope())
         ");
 
         logger.LogInformation("Demo data ensured successfully");
+        }
     }
     catch (Exception ex)
     {
