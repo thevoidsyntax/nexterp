@@ -4,6 +4,117 @@
 
 ---
 
+## 🔐 2026-09-22: Frontend was defeating the backend's own secure cookie auth
+
+The backend already implemented proper `HttpOnly; Secure` cookie-based auth (see
+`AuthController`) — but the frontend ignored it: it also read the raw access token out
+of the JSON login response, stored it in `localStorage` (both an explicit
+`nexterp_token` key and a second copy inside Zustand's persisted `nexterp-auth` state),
+and sent it via an `Authorization: Bearer` header on every request. Since that header
+takes priority over the cookie fallback, any XSS anywhere in the app could exfiltrate
+the session via `localStorage.getItem('nexterp_token')` — the `HttpOnly` protection the
+backend went to the trouble of setting up was never actually load-bearing.
+
+- [x] `nextjs-frontend/src/lib/api.ts`: removed the request interceptor that read
+  `nexterp_token` from `localStorage` and built the `Authorization` header; added
+  `withCredentials: true` so the browser sends the `HttpOnly` cookies automatically.
+  Backend already had `AllowCredentials()` in CORS, ready for this.
+- [x] `nextjs-frontend/src/lib/store.ts`: stopped writing the token to `localStorage`
+  and excluded it from Zustand's `persist` `partialize` — it no longer needs to leave
+  the login response at all.
+- [x] **Found while fixing this: the "Logout" command in the command palette
+  (`CommandPalette.tsx`) never actually logged anyone out.** It tried to clear the
+  auth cookies via `document.cookie = 'nexterp_token=; expires=...'` — a silent no-op,
+  since `HttpOnly` cookies aren't visible to `document.cookie` at all, for reading or
+  writing. It also never called the backend's logout endpoint, which is the *only* way
+  to invalidate the `HttpOnly` cookies (`authApi.logout()` already existed for this but
+  was never called from anywhere in the app). The sidebar's logout button had the same
+  gap. Both now call `authApi.logout()` (which clears the cookies server-side and the
+  local UI state) before navigating to `/login`. Consolidated the "clear server +
+  clear local state" logic into `authApi.logout()` itself instead of duplicating it at
+  both call sites.
+- [x] **Caught by a follow-up `/code-review`, before this ever shipped:** the login/
+  refresh cookies were set with `SameSite=Strict`. The production frontend
+  (`*.vercel.app`) and backend (`*.railway.app`) are different registrable domains —
+  a genuinely cross-site setup — and `Strict` (and `Lax`) cookies are never attached to
+  cross-site XHR/fetch calls. Had this shipped as-is, removing the `Authorization`-
+  header fallback above would have made production login *appear* to succeed (the
+  `Set-Cookie` response still arrives) and then immediately loop back to `/login`,
+  because the very next API call would go out with no cookie attached and get a 401 —
+  invisible in local dev, where frontend and backend are both `localhost` (same-site).
+  Changed to `SameSite=None` (requires, and already had, `Secure=true`); CORS's
+  explicit origin allowlist plus `AllowCredentials()` is what actually keeps this
+  restricted to the app's own frontend, same as before.
+- [x] Verified for real, end-to-end, against a real Postgres+Redis+the actual running
+  API (not mocked): login sets the cookies with `secure; samesite=none; httponly`;
+  a request authenticated *only* by the cookie jar (no header) succeeds; a request with
+  neither gets 401; logout returns 200 and empties the cookie jar; a subsequent request
+  with the pre-logout cookie jar gets 401 (proving logout actually invalidates the
+  session server-side, not just client-side).
+
+---
+
+## 🚨 2026-09-22: The backend has never actually been booted and run before today
+
+Everything up to this point this session was verified via `dotnet build`/`dotnet test`
+— never `dotnet run`. Actually running it against real Postgres+Redis (Docker, not
+mocked) surfaced two crash-level bugs that predate this session entirely, plus fixed
+two issues in the rate limiting work done earlier today. All of this was verified by
+actually booting the app and hitting real endpoints with curl, not just reading code.
+
+### Fixed
+- [x] **The API crashed on startup in `Development` — every time, unconditionally.**
+  `RateLimitingMiddleware` constructor-injected `IRateLimitService` (a Scoped service)
+  directly; ASP.NET Core constructs middleware once from the root container, so this
+  is invalid and ASP.NET Core's Development-mode scope validation refuses to start:
+  `Cannot resolve scoped service 'IRateLimitService' from root provider`. This has been
+  there since the initial commit. It didn't crash in `Production` (scope validation is
+  off there by default) — but that meant the middleware silently ran as a de-facto
+  singleton instead, sharing one rate-limit-service instance across every request for
+  the process lifetime. **This is exactly the environment `ci.yml`'s E2E job uses**
+  (`ASPNETCORE_ENVIRONMENT: Development`), so the "Start backend API" step would have
+  failed immediately once the earlier CI fix got it past the migration step — the CI
+  fix earlier today was necessary but not sufficient. Fixed by moving the dependency
+  from the constructor to an `InvokeAsync(HttpContext, IRateLimitService)` parameter,
+  which ASP.NET Core correctly resolves from the per-request scope. Verified: app now
+  boots and serves `/health/live` in Development against real Postgres/Redis.
+- [x] **Rate limiting never actually distinguished authenticated from anonymous
+  callers.** `app.UseRateLimiting()` ran *before* `app.UseAuthentication()`, so
+  `context.User.Identity.IsAuthenticated` was always false when the middleware read
+  it — every request, logged in or not, was keyed by IP and capped at the 100/min
+  anonymous limit; the 1000/min authenticated limit was dead code. Reordered so
+  rate limiting runs after authentication (but still before authorization). Verified
+  with curl: an authenticated request now gets `X-RateLimit-Limit: 1000`, an
+  anonymous one gets `100`.
+- [x] **`RedisRateLimitService`'s reset-time calculation was wrong.** Its Lua script
+  returned `windowStart + windowSeconds`, which algebraically equals `now` — so
+  `X-RateLimit-Reset` (and thus any client's `Retry-After` logic) always claimed the
+  limit resets *immediately*, never in the future. Fixed to `now + windowSeconds`
+  (matching `InMemoryRateLimitService`'s already-correct semantics). Verified against
+  a real Redis container: reset time now lands 5s in the future for a 5s window, not
+  at "now".
+- [x] **A migration generated earlier today needed reconciling before it could be
+  trusted.** Adding the `Money` EF Core value converters (see the entry below) forced
+  EF to notice the model had *other*, unrelated pending changes: `OrganizationModule.
+  ModuleCode` was added to the domain entity in a prior, unrelated commit
+  (`f0f045c`) with no migration ever generated for it — meaning **no migrated database
+  has this column**, despite `EnableOrganizationModuleCommand`/
+  `GetOrganizationModulesQuery` already depending on it. Generated and applied the
+  missing migration (`20260922114419_AddOrganizationModuleModuleCodeColumn` — renamed
+  from a misleading auto-generated name after confirming its actual content had
+  nothing to do with Money). Verified: `dotnet ef database update` applies cleanly
+  against real Postgres with zero remaining pending-model-changes warnings.
+
+### Still true, unrelated to today: `ApplicationDbContext`'s design-time scan warning
+`No instantiatable types implementing IEntityTypeConfiguration were found while
+scanning assembly 'ERP.Infrastructure'` prints on every startup. Not investigated —
+`OnModelCreating` clearly does have configuration (the Money/encryption converters,
+global filters), just not via that specific interface/pattern EF's scanner expects.
+Cosmetic unless something is actually silently missing its configuration; worth a
+look if a decimal/PII column ever isn't behaving as configured.
+
+---
+
 ## 🧱 2026-09-22: First real DDD Value Object (Money)
 
 Both READMEs claimed `ValueObjects/`/`Events/` folders and Value Objects/Domain Events
