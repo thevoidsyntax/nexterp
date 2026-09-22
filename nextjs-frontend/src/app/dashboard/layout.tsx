@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/lib/store';
+import { authApi } from '@/lib/api';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { NotificationBell } from '@/components/NotificationBell';
 import {
@@ -73,7 +74,7 @@ function NavSection({
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, isAuthenticated, logout } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
   const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
@@ -81,8 +82,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [isAuthenticated, router]);
 
   const handleLogout = () => {
-    logout();
-    router.push('/login');
+    authApi.logout().finally(() => router.push('/login'));
   };
 
   if (!isAuthenticated) {

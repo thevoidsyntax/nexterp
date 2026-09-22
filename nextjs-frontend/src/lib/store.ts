@@ -32,19 +32,19 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       isLoading: true,
 
+      // The access/refresh tokens live only in the HttpOnly cookies the API sets on
+      // login (see AuthController) — never in localStorage or this store's persisted
+      // state, so an XSS bug can't read them via `document.cookie`/localStorage the
+      // way it could when this store also mirrored the token client-side. `token` is
+      // kept on the in-memory state only for backward compatibility with existing
+      // callers; it is not persisted or used to build an Authorization header.
       login: (user, token) => {
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('nexterp_token', token);
-          localStorage.setItem('nexterp_user', JSON.stringify(user));
-        }
         set({ user, token, isAuthenticated: true, isLoading: false });
       },
 
+      // Only clears local UI state. Call authApi.logout() first to actually clear
+      // the HttpOnly cookies server-side — this alone cannot do that.
       logout: () => {
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('nexterp_token');
-          localStorage.removeItem('nexterp_user');
-        }
         set({ user: null, token: null, isAuthenticated: false, isLoading: false });
       },
 
@@ -54,7 +54,6 @@ export const useAuthStore = create<AuthState>()(
       name: 'nexterp-auth',
       partialize: (state) => ({
         user: state.user,
-        token: state.token,
         isAuthenticated: state.isAuthenticated,
       }),
     }

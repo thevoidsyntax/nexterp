@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { authApi } from '@/lib/api';
 
 interface CommandItem {
   id: string;
@@ -210,9 +211,10 @@ export function useCommandPalette() {
 
     // Actions
     { id: 'action-logout', label: 'Logout', icon: '🚪', shortcut: 'Ctrl+Shift+O', category: 'Actions', action: () => {
-      document.cookie = 'nexterp_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-      document.cookie = 'nexterp_refresh=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-      router.push('/login');
+      // The auth cookies are HttpOnly, so JS can't clear them directly (the
+      // document.cookie assignments this used to do were silently no-ops) —
+      // authApi.logout() clears them server-side (and the local UI state).
+      authApi.logout().finally(() => router.push('/login'));
     }},
   ];
 

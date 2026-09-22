@@ -97,7 +97,13 @@ public class AuthController : BaseApiController
             {
                 HttpOnly = true,
                 Secure = true,
-                SameSite = SameSiteMode.Strict,
+                // Frontend (Vercel) and API (Railway) are different registrable domains,
+                // so this cookie is only ever sent on cross-site requests — SameSite=Strict
+                // (or Lax) would mean the browser never attaches it and every API call
+                // after login 401s. CORS already restricts which origins can make a
+                // credentialed request that succeeds, so None doesn't hand this to
+                // arbitrary sites the way it would without that origin allowlist.
+                SameSite = SameSiteMode.None,
                 Expires = DateTimeOffset.UtcNow.AddMinutes(_jwtSettings.AccessTokenExpirationMinutes),
                 Path = "/"
             };
@@ -109,7 +115,13 @@ public class AuthController : BaseApiController
             {
                 HttpOnly = true,
                 Secure = true,
-                SameSite = SameSiteMode.Strict,
+                // Frontend (Vercel) and API (Railway) are different registrable domains,
+                // so this cookie is only ever sent on cross-site requests — SameSite=Strict
+                // (or Lax) would mean the browser never attaches it and every API call
+                // after login 401s. CORS already restricts which origins can make a
+                // credentialed request that succeeds, so None doesn't hand this to
+                // arbitrary sites the way it would without that origin allowlist.
+                SameSite = SameSiteMode.None,
                 Expires = DateTimeOffset.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays),
                 Path = "/"
             };
@@ -233,7 +245,8 @@ public class AuthController : BaseApiController
         {
             HttpOnly = true,
             Secure = true,
-            SameSite = SameSiteMode.Strict,
+            // See the Login action for why this must be None, not Strict/Lax.
+            SameSite = SameSiteMode.None,
             Expires = DateTimeOffset.UtcNow.AddMinutes(_jwtSettings.AccessTokenExpirationMinutes),
             Path = "/"
         };
@@ -244,7 +257,8 @@ public class AuthController : BaseApiController
         {
             HttpOnly = true,
             Secure = true,
-            SameSite = SameSiteMode.Strict,
+            // See the Login action for why this must be None, not Strict/Lax.
+            SameSite = SameSiteMode.None,
             Expires = DateTimeOffset.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays),
             Path = "/"
         };
