@@ -56,6 +56,7 @@ function NavSection({
             key={item.href}
             href={item.href}
             title={collapsed ? item.name : undefined}
+            aria-current={isActive ? 'page' : undefined}
             className={`flex items-center gap-2.5 px-2.5 py-2 rounded-md transition text-sm ${
               isActive
                 ? 'bg-blue-600 text-white font-medium'
@@ -103,7 +104,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <span className="text-white font-bold text-xs">N</span>
           </div>
           {!collapsed && <span className="ml-2 text-white font-bold text-sm tracking-wide">NEXTERP</span>}
-          <button onClick={() => setCollapsed(!collapsed)} className="ml-auto text-slate-400 hover:text-white p-1">
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            className="ml-auto text-slate-400 hover:text-white p-1"
+          >
             {collapsed ? <Menu className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
         </div>

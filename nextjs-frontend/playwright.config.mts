@@ -17,36 +17,24 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
 
+  // No shared-login "setup" project: every current spec either logs in itself
+  // (dashboard.spec.ts's beforeEach) or doesn't need auth at all (api.spec.ts,
+  // auth.spec.ts tests the login form directly). A prior "setup" project here
+  // declared `dependencies: ['setup']` and a storageState file that no
+  // *.setup.ts ever produced, which failed every single test run
+  // (ENOENT: playwright/.auth/user.json) rather than actually sharing a login.
   projects: [
-    // Setup project
-    {
-      name: 'setup',
-      testMatch: /.*\.setup\.ts/,
-    },
-
-    // Chromium for all tests
     {
       name: 'chromium',
-      use: {
-        ...devices['Desktop Chrome'],
-        // Reuse the authenticated state from setup
-        storageState: 'playwright/.auth/user.json',
-      },
-      dependencies: ['setup'],
+      use: { ...devices['Desktop Chrome'] },
     },
-
-    // Firefox
     {
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
-      dependencies: ['setup'],
     },
-
-    // Mobile Safari
     {
       name: 'mobile-chrome',
       use: { ...devices['Pixel 5'] },
-      dependencies: ['setup'],
     },
   ],
 

@@ -1,6 +1,77 @@
 # NEXTERP ERP - Project TODO & Documentation
 
-> Last Updated: 2026-09-22
+> Last Updated: 2026-09-23
+
+---
+
+## ✅ 2026-09-23: E2E Tests — the last red CI job, now genuinely 23/23 green
+
+Continuing straight on from the 2026-09-22 entries below. The "Run Playwright tests"
+step was the one job left failing after that day's CI fixes. Root causes, found by
+actually running the full stack (Postgres + Redis + API + Next.js + Playwright)
+locally rather than reading the config and assuming it worked:
+
+- [x] **Playwright's "setup" project pointed at a file that never existed.**
+  `playwright.config.mts` declared a `setup` project matching `*.setup.ts`, and every
+  other project declared `dependencies: ['setup']` plus
+  `storageState: 'playwright/.auth/user.json'` — but no `*.setup.ts` file has ever
+  existed in this repo. The setup project matched nothing, produced no storage state,
+  and every dependent test failed immediately with `ENOENT: playwright/.auth/user.json`.
+  None of the three existing spec files actually needed shared storage state
+  (`dashboard.spec.ts` logs in itself per-test; `api.spec.ts`/`auth.spec.ts` don't need
+  a session at all) — removed the dead setup/dependencies/storageState wiring instead
+  of writing an unused auth-sharing mechanism just to satisfy the config.
+- [x] **`api.spec.ts` reused a `beforeAll`-scoped `request` fixture across tests**,
+  which Playwright explicitly disallows (`Fixture { request } from beforeAll cannot be
+  reused in a test`) — every API test in the file failed on this alone. Rewrote to use
+  each test's own `request` fixture parameter instead of a shared module-level variable.
+- [x] **`api.spec.ts`'s requests targeted the wrong origin.** Playwright's `baseURL` is
+  the Next.js frontend (`localhost:3000`), which has no `/api/v1/*` routes of its own —
+  relative-path requests there 404 silently against the frontend instead of reaching
+  the .NET backend. Switched to absolute URLs against `NEXT_PUBLIC_API_URL`. Also fixed
+  the response-shape assertions (`body.value.accessToken`, which was never the real
+  shape) to match what the API actually returns (`body.data.accessToken` — verified
+  directly with curl against a running instance).
+- [x] **The "should rate limit excessive login attempts" test poisoned every test that
+  ran after it.** `LoginRateLimitService`'s brute-force lockout is keyed by *source IP*
+  as well as username, and every test in the suite — regardless of which username it
+  logs in as — runs from the same IP (the test runner). Once the rate-limit test
+  tripped the lockout (by design — that's what it's testing), the entire IP was blocked
+  for 15 minutes, and every subsequent login-dependent test failed with
+  `page.waitForURL: Timeout ... exceeded`. Switching the rate-limit test to a throwaway
+  username didn't help, since the lockout isn't only keyed by username. Moved it to its
+  own file (`zzz-rate-limiting.spec.ts`, named to sort and run last) so its side effect
+  can't reach any test that needs a working login.
+- [x] **Three assertions in `auth.spec.ts`/`dashboard.spec.ts` didn't match the actual
+  UI**, and two of those mismatches were real, separate accessibility gaps rather than
+  just bad test expectations:
+  - "should display login form" expected an `h1`/`h2` to contain "login"/"sign in";
+    the app's heading is just "NEXTERP" (the actual "Sign In" text is on the submit
+    button). Fixed the assertion to check the button instead of the heading.
+  - "should show error with invalid credentials" mixed a `text=` pseudo-selector into
+    a comma-separated CSS selector list, which is a syntax error in Playwright/CSS, not
+    valid "OR" syntax. Fixed with `.or()`, then fixed a resulting strict-mode violation
+    (the error icon's `lucide-circle-alert` class also matched `[class*="alert"]`) with
+    `.first()`.
+  - "should validate required fields" expected a custom validation-message element that
+    doesn't exist — the form relies on plain HTML5 `required` inputs, so the browser
+    blocks submission before React's `onSubmit` ever runs. Rewrote to assert the actual
+    behavior (stays on `/login`, the field reports `validity.valid === false`).
+  - "should highlight active navigation item" expected `a[aria-current="page"]` —
+    **the active nav link never actually set `aria-current`**, a real, missing
+    accessibility attribute, not just an untested one. Added it in
+    `dashboard/layout.tsx` rather than loosening the test.
+  - "should collapse sidebar on mobile" expected `button[aria-label*="toggle"]` — the
+    icon-only sidebar collapse button **had no `aria-label` at all**, violating this
+    project's own documented rule ("All icon buttons need aria-label", `CLAUDE.md`).
+    Added `aria-label="Collapse sidebar"`/`"Expand sidebar"` and updated the test to
+    match the more descriptive label rather than genericizing it down to "toggle".
+- [x] Added `test-results/`, `playwright-report/`, and `playwright/.auth/` to
+  `nextjs-frontend/.gitignore` — none were ignored before (the same gap `ERP.WebUI/`
+  had, which had committed copies of these).
+- [x] Verified for real: 6 successive full local runs against a fresh Postgres+Redis+API
+  each time (to avoid the exact lockout/stale-process contamination described above),
+  ending at **23/23 passed** on `--project=chromium`.
 
 ---
 

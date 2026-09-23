@@ -1,18 +1,23 @@
-import { test, expect, APIRequestContext } from '@playwright/test';
+import { test, expect } from '@playwright/test';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 /**
  * API Integration Tests
+ *
+ * These hit the .NET backend directly (API_BASE_URL), not the Playwright
+ * `baseURL` (the Next.js frontend at localhost:3000, which has no /api/v1
+ * routes of its own) — so every request here uses an absolute URL.
+ *
+ * Each test uses its own `request` fixture rather than sharing one assigned
+ * in beforeAll: Playwright fixtures obtained in beforeAll are scoped to that
+ * hook and can't be reused inside a test ("Fixture { request } from
+ * beforeAll cannot be reused in a test").
  */
 test.describe('API Integration', () => {
-  let apiContext: APIRequestContext;
-
-  test.beforeAll(async ({ request }) => {
-    apiContext = request;
-  });
-
   test.describe('Auth API', () => {
-    test('POST /api/v1/auth/login should work with valid credentials', async () => {
-      const response = await apiContext.post('/api/v1/auth/login', {
+    test('POST /api/v1/auth/login should work with valid credentials', async ({ request }) => {
+      const response = await request.post(`${API_BASE_URL}/api/v1/auth/login`, {
         data: {
           username: 'admin',
           password: 'DevPassword2024!',
@@ -24,14 +29,14 @@ test.describe('API Integration', () => {
 
       expect(response.ok()).toBeTruthy();
       const body = await response.json();
-      expect(body).toHaveProperty('value');
-      expect(body.value).toHaveProperty('accessToken');
-      expect(body.value).toHaveProperty('refreshToken');
-      expect(body.value).toHaveProperty('user');
+      expect(body).toHaveProperty('data');
+      expect(body.data).toHaveProperty('accessToken');
+      expect(body.data).toHaveProperty('refreshToken');
+      expect(body.data).toHaveProperty('user');
     });
 
-    test('POST /api/v1/auth/login should fail with invalid credentials', async () => {
-      const response = await apiContext.post('/api/v1/auth/login', {
+    test('POST /api/v1/auth/login should fail with invalid credentials', async ({ request }) => {
+      const response = await request.post(`${API_BASE_URL}/api/v1/auth/login`, {
         data: {
           username: 'admin',
           password: 'wrongpassword',
@@ -42,12 +47,11 @@ test.describe('API Integration', () => {
       });
 
       // Should return 401 or error response
-      const body = await response.json();
       expect(response.status()).toBeGreaterThanOrEqual(400);
     });
 
-    test('POST /api/v1/auth/login should validate required fields', async () => {
-      const response = await apiContext.post('/api/v1/auth/login', {
+    test('POST /api/v1/auth/login should validate required fields', async ({ request }) => {
+      const response = await request.post(`${API_BASE_URL}/api/v1/auth/login`, {
         data: {
           username: '',
           password: '',
@@ -63,27 +67,22 @@ test.describe('API Integration', () => {
   });
 
   test.describe('Protected API Routes', () => {
-    let authToken: string;
+    test('GET /api/v1/users should require authentication', async ({ request }) => {
+      const response = await request.get(`${API_BASE_URL}/api/v1/users`);
+      expect([401, 403]).toContain(response.status());
+    });
 
-    test.beforeAll(async () => {
-      // Login to get token
-      const loginResponse = await apiContext.post('/api/v1/auth/login', {
+    test('GET /api/v1/users should work with valid token', async ({ request }) => {
+      const loginResponse = await request.post(`${API_BASE_URL}/api/v1/auth/login`, {
         data: {
           username: 'admin',
           password: 'DevPassword2024!',
         },
       });
       const loginBody = await loginResponse.json();
-      authToken = loginBody.value?.accessToken || '';
-    });
+      const authToken = loginBody.data?.accessToken || '';
 
-    test('GET /api/v1/users should require authentication', async () => {
-      const response = await apiContext.get('/api/v1/users');
-      expect([401, 403]).toContain(response.status());
-    });
-
-    test('GET /api/v1/users should work with valid token', async () => {
-      const response = await apiContext.get('/api/v1/users', {
+      const response = await request.get(`${API_BASE_URL}/api/v1/users`, {
         headers: {
           Authorization: `Bearer ${authToken}`,
         },
@@ -95,42 +94,21 @@ test.describe('API Integration', () => {
   });
 
   test.describe('Health Checks', () => {
-    test('GET /health/live should return 200', async () => {
-      const response = await apiContext.get('/health/live');
+    test('GET /health/live should return 200', async ({ request }) => {
+      const response = await request.get(`${API_BASE_URL}/health/live`);
       expect(response.status()).toBe(200);
     });
 
-    test('GET /health/ready should return 200', async () => {
-      const response = await apiContext.get('/health/ready');
+    test('GET /health/ready should return 200', async ({ request }) => {
+      const response = await request.get(`${API_BASE_URL}/health/ready`);
       expect(response.status()).toBe(200);
     });
   });
 });
 
-/**
- * Rate Limiting Tests
- */
-test.describe('Rate Limiting', () => {
-  test('should rate limit excessive login attempts', async ({ request }) => {
-    // Make many rapid login attempts
-    const attempts = 10;
-    const results: number[] = [];
-
-    for (let i = 0; i < attempts; i++) {
-      const response = await request.post('/api/v1/auth/login', {
-        data: {
-          username: 'admin',
-          password: 'wrongpassword',
-        },
-      });
-      results.push(response.status());
-    }
-
-    // At least some requests should be rate limited (429)
-    // or all should return 401 (invalid credentials)
-    const hasRateLimit = results.includes(429);
-    const allUnauthorized = results.every((s) => s === 401);
-
-    expect(hasRateLimit || allUnauthorized).toBeTruthy();
-  });
-});
+// Rate limiting is tested in zzz-rate-limiting.spec.ts, deliberately isolated
+// from every other test here: LoginRateLimitService locks out the whole
+// *source IP* (not just the username being attempted) once it trips, and
+// every test in this suite runs from the same IP (the test runner itself).
+// Keeping it in a separate, alphabetically-last file means its lockout can't
+// poison any test that needs a working login.

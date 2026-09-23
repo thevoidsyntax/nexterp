@@ -73,7 +73,7 @@ test.describe('Navigation', () => {
   });
 
   test('should highlight active navigation item', async ({ page }) => {
-    const activeItem = page.locator('a[aria-current="page"], a[class*="active"]');
+    const activeItem = page.locator('a[aria-current="page"]');
     await expect(activeItem.first()).toBeVisible();
   });
 
@@ -81,8 +81,8 @@ test.describe('Navigation', () => {
     // Set mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });
 
-    // Toggle sidebar button should be visible
-    const toggleButton = page.locator('button[aria-label*="toggle"], button[class*="menu"]');
+    // Sidebar collapse/expand button should be visible
+    const toggleButton = page.locator('button[aria-label*="sidebar"]');
     await expect(toggleButton.first()).toBeVisible();
   });
 });
