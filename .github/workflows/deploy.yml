@@ -41,7 +41,9 @@ jobs:
         run: npm install -g @railway/cli
 
       - name: Deploy to Railway
-        run: railway up --service ERP-API
+        # Railway service ID (not the "ERP-API" name — that didn't resolve
+        # against this project, "Service not found").
+        run: railway up --service 0b6e64f5-43c0-48b5-8088-35c77d43ce91
 
       - name: Set Railway Variables
         run: |
