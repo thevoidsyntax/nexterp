@@ -23,18 +23,34 @@ export default defineConfig({
   // declared `dependencies: ['setup']` and a storageState file that no
   // *.setup.ts ever produced, which failed every single test run
   // (ENOENT: playwright/.auth/user.json) rather than actually sharing a login.
+  // Every project runs the full testDir by default, so with 3 browser projects
+  // zzz-rate-limiting.spec.ts would run 3 times — and LoginRateLimitService's
+  // lockout (15 min, per source IP) triggered by the first project's run is
+  // still active when the next project starts moments later, failing every
+  // login-dependent test in it. Excluded from the browser projects and run
+  // instead by the dedicated project below, so it executes exactly once,
+  // after everything else (it's listed last; Playwright runs projects in
+  // array order).
   projects: [
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+      testIgnore: /zzz-rate-limiting\.spec\.ts/,
     },
     {
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
+      testIgnore: /zzz-rate-limiting\.spec\.ts/,
     },
     {
       name: 'mobile-chrome',
       use: { ...devices['Pixel 5'] },
+      testIgnore: /zzz-rate-limiting\.spec\.ts/,
+    },
+    {
+      name: 'rate-limiting',
+      use: { ...devices['Desktop Chrome'] },
+      testMatch: /zzz-rate-limiting\.spec\.ts/,
     },
   ],
 

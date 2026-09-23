@@ -4,6 +4,40 @@
 
 ---
 
+## ✅ 2026-09-23 (cont'd): the 23/23 fix only covered 1 of 3 browser projects
+
+Pushed the previous entry's fix expecting a green run. CI instead took **18 minutes**
+(local chromium-only runs took ~30s) and still failed — `npm run test:ci` (what
+`ci.yml` actually calls) runs all three configured projects (chromium, firefox,
+mobile-chrome), not just chromium, and `--project=chromium` is what had been
+validated locally.
+
+- [x] **Root cause: the rate-limiting test's isolation fix only worked within a
+  single project.** Every Playwright project runs the full `testDir` by default, so
+  `zzz-rate-limiting.spec.ts` (moved to run last *within* a project, per the previous
+  entry) still ran once *per project* — three times total. `LoginRateLimitService`'s
+  15-minute lockout from the chromium project's run was still in effect when firefox
+  started moments later, and still in effect when mobile-chrome started after that —
+  failing every login-dependent test in both. This produced the exact same symptom as
+  before (`page.waitForURL: Timeout ... exceeded` on every dashboard test) but from a
+  different cause than the one already fixed. Fixed by excluding
+  `zzz-rate-limiting.spec.ts` from the three browser projects (`testIgnore`) and
+  adding a dedicated fourth project that matches only that file (`testMatch`),
+  guaranteeing it runs exactly once, after everything else.
+- [x] Verified with the actual `npx playwright test` invocation (all 4 projects, no
+  `--project` filter — matching `npm run test:ci` exactly) against a fresh
+  Postgres+Redis+API: **67/67 passed in 1.2 minutes** (23 chromium + 23 firefox + 21
+  mobile-chrome + 1 rate-limiting). Chromium's own count differs slightly between runs
+  only in which sub-tests happen to retry pointlessly; no chromium test ever failed in
+  any run once the login flow itself worked.
+- Lesson recorded here so it isn't relearned: **when a repo's Playwright config lists
+  multiple projects, validate with the exact `npm run test:ci` command (or at least all
+  configured projects), not a `--project` filter** — a single-project pass looks
+  identical to a full pass right up until CI proves otherwise, and did twice in a row
+  here.
+
+---
+
 ## ✅ 2026-09-23: E2E Tests — the last red CI job, now genuinely 23/23 green
 
 Continuing straight on from the 2026-09-22 entries below. The "Run Playwright tests"
