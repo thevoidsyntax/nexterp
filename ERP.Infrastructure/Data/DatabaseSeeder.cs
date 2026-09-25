@@ -59,6 +59,20 @@ public static class DatabaseSeeder
     public static readonly Guid AssetsModuleId = Guid.Parse("00000000-0000-0000-0001-000000000009");
 
     /// <summary>
+    /// Runs a seed section's inserts inside a transaction so a failure partway
+    /// through (e.g. a dropped connection on employee #5 of 8) rolls back
+    /// everything the section wrote. Without this, the surrounding AnyAsync()
+    /// guard would see the partial rows on the next startup and skip the
+    /// section entirely, permanently leaving it half-seeded.
+    /// </summary>
+    private static async Task RunInTransactionAsync(ERPDbContext context, Func<Task> work)
+    {
+        await using var transaction = await context.Database.BeginTransactionAsync();
+        await work();
+        await transaction.CommitAsync();
+    }
+
+    /// <summary>
     /// Full from-scratch seed: organization, admin user, license/module catalog
     /// (legacy GUID-keyed system) and all reference/demo data below. Not currently
     /// called anywhere - Program.cs calls the individual Seed*Async sections it
@@ -75,30 +89,39 @@ public static class DatabaseSeeder
         if (!await context.Organizations.AnyAsync())
         {
             logger.LogInformation("Seeding organization...");
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""Organizations"" (""Id"", ""Name"", ""Code"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"")
-                VALUES ({DemoOrganizationId}, 'Nexterp Demo Corp', 'NEXTERP', TRUE, FALSE, {now}, {now})");
+            await RunInTransactionAsync(context, async () =>
+            {
+                await context.Database.ExecuteSqlAsync($@"
+                    INSERT INTO ""Organizations"" (""Id"", ""Name"", ""Code"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"")
+                    VALUES ({DemoOrganizationId}, 'Nexterp Demo Corp', 'NEXTERP', TRUE, FALSE, {now}, {now})");
+            });
         }
 
         if (!await context.Roles.AnyAsync())
         {
             logger.LogInformation("Seeding roles...");
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""Roles"" (""Id"", ""OrganizationId"", ""Name"", ""Description"", ""IsActive"", ""IsSystemRole"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({AdminRoleId}, {DemoOrganizationId}, 'Admin', 'System Administrator', TRUE, TRUE, FALSE, {now}, {now})");
+            await RunInTransactionAsync(context, async () =>
+            {
+                await context.Database.ExecuteSqlAsync($@"
+                    INSERT INTO ""Roles"" (""Id"", ""OrganizationId"", ""Name"", ""Description"", ""IsActive"", ""IsSystemRole"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                    ({AdminRoleId}, {DemoOrganizationId}, 'Admin', 'System Administrator', TRUE, TRUE, FALSE, {now}, {now})");
+            });
         }
 
         if (!await context.Users.AnyAsync())
         {
             logger.LogInformation("Seeding demo user...");
             var passwordHash = BCrypt.Net.BCrypt.HashPassword("Admin123!");
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""Users"" (""Id"", ""OrganizationId"", ""Username"", ""Email"", ""PasswordHash"", ""FirstName"", ""LastName"", ""Phone"", ""IsActive"", ""IsSuperAdmin"", ""FailedLoginAttempts"", ""LockedUntil"", ""LastLoginAt"", ""LastLoginIp"", ""RefreshTokenHash"", ""RefreshTokenExpiry"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({DemoUserId}, {DemoOrganizationId}, 'admin', 'admin@nexterp.com', {passwordHash}, 'System', 'Administrator', NULL, TRUE, TRUE, 0, NULL, NULL, NULL, NULL, NULL, FALSE, {now}, {now})");
+            await RunInTransactionAsync(context, async () =>
+            {
+                await context.Database.ExecuteSqlAsync($@"
+                    INSERT INTO ""Users"" (""Id"", ""OrganizationId"", ""Username"", ""Email"", ""PasswordHash"", ""FirstName"", ""LastName"", ""Phone"", ""IsActive"", ""IsSuperAdmin"", ""FailedLoginAttempts"", ""LockedUntil"", ""LastLoginAt"", ""LastLoginIp"", ""RefreshTokenHash"", ""RefreshTokenExpiry"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                    ({DemoUserId}, {DemoOrganizationId}, 'admin', 'admin@nexterp.com', {passwordHash}, 'System', 'Administrator', NULL, TRUE, TRUE, 0, NULL, NULL, NULL, NULL, NULL, FALSE, {now}, {now})");
 
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""UserRoles"" (""Id"", ""UserId"", ""RoleId"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({Guid.NewGuid()}, {DemoUserId}, {AdminRoleId}, FALSE, {now}, {now})");
+                await context.Database.ExecuteSqlAsync($@"
+                    INSERT INTO ""UserRoles"" (""Id"", ""UserId"", ""RoleId"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                    ({Guid.NewGuid()}, {DemoUserId}, {AdminRoleId}, FALSE, {now}, {now})");
+            });
         }
 
         await SeedDepartmentsAndPositionsAsync(context, logger, now);
@@ -111,48 +134,54 @@ public static class DatabaseSeeder
         if (!await context.LicenseTiers.AnyAsync())
         {
             logger.LogInformation("Seeding license tiers...");
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""LicenseTiers"" (""Id"", ""Code"", ""DisplayName"", ""Description"", ""MonthlyPrice"", ""DefaultMaxUsers"", ""SortOrder"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({StarterTierId}, 'STARTER', 'Starter', 'Basic ERP package with core modules', 500000, 10, 1, TRUE, FALSE, {now}, {now})");
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""LicenseTiers"" (""Id"", ""Code"", ""DisplayName"", ""Description"", ""MonthlyPrice"", ""DefaultMaxUsers"", ""SortOrder"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({ProfessionalTierId}, 'PROFESSIONAL', 'Professional', 'Full ERP with HRM and Accounting', 1500000, 50, 2, TRUE, FALSE, {now}, {now})");
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""LicenseTiers"" (""Id"", ""Code"", ""DisplayName"", ""Description"", ""MonthlyPrice"", ""DefaultMaxUsers"", ""SortOrder"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({EnterpriseTierId}, 'ENTERPRISE', 'Enterprise', 'Complete ERP with all modules', 3000000, 200, 3, TRUE, FALSE, {now}, {now})");
+            await RunInTransactionAsync(context, async () =>
+            {
+                await context.Database.ExecuteSqlAsync($@"
+                    INSERT INTO ""LicenseTiers"" (""Id"", ""Code"", ""DisplayName"", ""Description"", ""MonthlyPrice"", ""DefaultMaxUsers"", ""SortOrder"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                    ({StarterTierId}, 'STARTER', 'Starter', 'Basic ERP package with core modules', 500000, 10, 1, TRUE, FALSE, {now}, {now})");
+                await context.Database.ExecuteSqlAsync($@"
+                    INSERT INTO ""LicenseTiers"" (""Id"", ""Code"", ""DisplayName"", ""Description"", ""MonthlyPrice"", ""DefaultMaxUsers"", ""SortOrder"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                    ({ProfessionalTierId}, 'PROFESSIONAL', 'Professional', 'Full ERP with HRM and Accounting', 1500000, 50, 2, TRUE, FALSE, {now}, {now})");
+                await context.Database.ExecuteSqlAsync($@"
+                    INSERT INTO ""LicenseTiers"" (""Id"", ""Code"", ""DisplayName"", ""Description"", ""MonthlyPrice"", ""DefaultMaxUsers"", ""SortOrder"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                    ({EnterpriseTierId}, 'ENTERPRISE', 'Enterprise', 'Complete ERP with all modules', 3000000, 200, 3, TRUE, FALSE, {now}, {now})");
+            });
         }
 
         // ============ MODULE DEFINITIONS (legacy GUID-keyed system) ============
         if (!await context.Modules.AnyAsync())
         {
             logger.LogInformation("Seeding module definitions...");
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""Modules"" (""Id"", ""Code"", ""DisplayName"", ""Description"", ""Category"", ""IsPremium"", ""SortOrder"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({SalesModuleId}, 'SALES', 'Sales Management', 'Customer management, quotes, orders, and invoices', 0, FALSE, 1, TRUE, FALSE, {now}, {now})");
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""Modules"" (""Id"", ""Code"", ""DisplayName"", ""Description"", ""Category"", ""IsPremium"", ""SortOrder"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({InventoryModuleId}, 'INVENTORY', 'Inventory Management', 'Stock management, warehouses, batch tracking', 0, FALSE, 2, TRUE, FALSE, {now}, {now})");
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""Modules"" (""Id"", ""Code"", ""DisplayName"", ""Description"", ""Category"", ""IsPremium"", ""SortOrder"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({PurchasingModuleId}, 'PURCHASING', 'Purchasing', 'Supplier management, purchase orders, goods receipt', 0, FALSE, 3, TRUE, FALSE, {now}, {now})");
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""Modules"" (""Id"", ""Code"", ""DisplayName"", ""Description"", ""Category"", ""IsPremium"", ""SortOrder"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({AccountingModuleId}, 'ACCOUNTING', 'Accounting', 'Chart of accounts, journals, financial reports', 1, TRUE, 4, TRUE, FALSE, {now}, {now})");
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""Modules"" (""Id"", ""Code"", ""DisplayName"", ""Description"", ""Category"", ""IsPremium"", ""SortOrder"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({HrmModuleId}, 'HRM', 'Human Resource Management', 'Employee management, attendance, leave, payroll', 1, TRUE, 5, TRUE, FALSE, {now}, {now})");
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""Modules"" (""Id"", ""Code"", ""DisplayName"", ""Description"", ""Category"", ""IsPremium"", ""SortOrder"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({ProjectsModuleId}, 'PROJECTS', 'Project Management', 'Project planning, task tracking, Gantt charts', 2, TRUE, 6, TRUE, FALSE, {now}, {now})");
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""Modules"" (""Id"", ""Code"", ""DisplayName"", ""Description"", ""Category"", ""IsPremium"", ""SortOrder"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({QualityModuleId}, 'QUALITY', 'Quality Management', 'Inspections, NCR, CAPA management', 2, TRUE, 7, TRUE, FALSE, {now}, {now})");
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""Modules"" (""Id"", ""Code"", ""DisplayName"", ""Description"", ""Category"", ""IsPremium"", ""SortOrder"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({AnalyticsModuleId}, 'ANALYTICS', 'Analytics & Reporting', 'Real-time dashboards, KPI tracking', 2, TRUE, 8, TRUE, FALSE, {now}, {now})");
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""Modules"" (""Id"", ""Code"", ""DisplayName"", ""Description"", ""Category"", ""IsPremium"", ""SortOrder"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({AssetsModuleId}, 'ASSETS', 'Asset Management', 'Fixed assets, depreciation, maintenance tracking', 2, TRUE, 9, TRUE, FALSE, {now}, {now})");
+            await RunInTransactionAsync(context, async () =>
+            {
+                await context.Database.ExecuteSqlAsync($@"
+                    INSERT INTO ""Modules"" (""Id"", ""Code"", ""DisplayName"", ""Description"", ""Category"", ""IsPremium"", ""SortOrder"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                    ({SalesModuleId}, 'SALES', 'Sales Management', 'Customer management, quotes, orders, and invoices', 0, FALSE, 1, TRUE, FALSE, {now}, {now})");
+                await context.Database.ExecuteSqlAsync($@"
+                    INSERT INTO ""Modules"" (""Id"", ""Code"", ""DisplayName"", ""Description"", ""Category"", ""IsPremium"", ""SortOrder"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                    ({InventoryModuleId}, 'INVENTORY', 'Inventory Management', 'Stock management, warehouses, batch tracking', 0, FALSE, 2, TRUE, FALSE, {now}, {now})");
+                await context.Database.ExecuteSqlAsync($@"
+                    INSERT INTO ""Modules"" (""Id"", ""Code"", ""DisplayName"", ""Description"", ""Category"", ""IsPremium"", ""SortOrder"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                    ({PurchasingModuleId}, 'PURCHASING', 'Purchasing', 'Supplier management, purchase orders, goods receipt', 0, FALSE, 3, TRUE, FALSE, {now}, {now})");
+                await context.Database.ExecuteSqlAsync($@"
+                    INSERT INTO ""Modules"" (""Id"", ""Code"", ""DisplayName"", ""Description"", ""Category"", ""IsPremium"", ""SortOrder"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                    ({AccountingModuleId}, 'ACCOUNTING', 'Accounting', 'Chart of accounts, journals, financial reports', 1, TRUE, 4, TRUE, FALSE, {now}, {now})");
+                await context.Database.ExecuteSqlAsync($@"
+                    INSERT INTO ""Modules"" (""Id"", ""Code"", ""DisplayName"", ""Description"", ""Category"", ""IsPremium"", ""SortOrder"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                    ({HrmModuleId}, 'HRM', 'Human Resource Management', 'Employee management, attendance, leave, payroll', 1, TRUE, 5, TRUE, FALSE, {now}, {now})");
+                await context.Database.ExecuteSqlAsync($@"
+                    INSERT INTO ""Modules"" (""Id"", ""Code"", ""DisplayName"", ""Description"", ""Category"", ""IsPremium"", ""SortOrder"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                    ({ProjectsModuleId}, 'PROJECTS', 'Project Management', 'Project planning, task tracking, Gantt charts', 2, TRUE, 6, TRUE, FALSE, {now}, {now})");
+                await context.Database.ExecuteSqlAsync($@"
+                    INSERT INTO ""Modules"" (""Id"", ""Code"", ""DisplayName"", ""Description"", ""Category"", ""IsPremium"", ""SortOrder"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                    ({QualityModuleId}, 'QUALITY', 'Quality Management', 'Inspections, NCR, CAPA management', 2, TRUE, 7, TRUE, FALSE, {now}, {now})");
+                await context.Database.ExecuteSqlAsync($@"
+                    INSERT INTO ""Modules"" (""Id"", ""Code"", ""DisplayName"", ""Description"", ""Category"", ""IsPremium"", ""SortOrder"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                    ({AnalyticsModuleId}, 'ANALYTICS', 'Analytics & Reporting', 'Real-time dashboards, KPI tracking', 2, TRUE, 8, TRUE, FALSE, {now}, {now})");
+                await context.Database.ExecuteSqlAsync($@"
+                    INSERT INTO ""Modules"" (""Id"", ""Code"", ""DisplayName"", ""Description"", ""Category"", ""IsPremium"", ""SortOrder"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                    ({AssetsModuleId}, 'ASSETS', 'Asset Management', 'Fixed assets, depreciation, maintenance tracking', 2, TRUE, 9, TRUE, FALSE, {now}, {now})");
+            });
         }
 
         // ============ MODULE PERMISSIONS ============
@@ -247,12 +276,15 @@ public static class DatabaseSeeder
                 (AssetsModuleId, "assets.maintenance.create", "Schedule asset maintenance"),
             };
 
-            foreach (var (moduleId, permission, description) in permissions)
+            await RunInTransactionAsync(context, async () =>
             {
-                await context.Database.ExecuteSqlAsync($@"
-                    INSERT INTO ""ModulePermissions"" (""Id"", ""ModuleId"", ""Permission"", ""Description"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                    ({Guid.NewGuid()}, {moduleId}, {permission}, {description}, FALSE, {now}, {now})");
-            }
+                foreach (var (moduleId, permission, description) in permissions)
+                {
+                    await context.Database.ExecuteSqlAsync($@"
+                        INSERT INTO ""ModulePermissions"" (""Id"", ""ModuleId"", ""Permission"", ""Description"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                        ({Guid.NewGuid()}, {moduleId}, {permission}, {description}, FALSE, {now}, {now})");
+                }
+            });
         }
 
         // ============ ORGANIZATION LICENSE (Demo gets Enterprise, legacy system) ============
@@ -260,21 +292,27 @@ public static class DatabaseSeeder
         {
             logger.LogInformation("Seeding demo organization license...");
             var licenseEndDate = now.AddYears(1);
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""OrganizationLicenses"" (""Id"", ""OrganizationId"", ""LicenseTierId"", ""StartDate"", ""EndDate"", ""MaxUsers"", ""BillingEmail"", ""IsAutoRenew"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({Guid.NewGuid()}, {DemoOrganizationId}, {EnterpriseTierId}, {now}, {licenseEndDate}, 50, 'billing@nexterp.com', FALSE, FALSE, {now}, {now})");
+            await RunInTransactionAsync(context, async () =>
+            {
+                await context.Database.ExecuteSqlAsync($@"
+                    INSERT INTO ""OrganizationLicenses"" (""Id"", ""OrganizationId"", ""LicenseTierId"", ""StartDate"", ""EndDate"", ""MaxUsers"", ""BillingEmail"", ""IsAutoRenew"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                    ({Guid.NewGuid()}, {DemoOrganizationId}, {EnterpriseTierId}, {now}, {licenseEndDate}, 50, 'billing@nexterp.com', FALSE, FALSE, {now}, {now})");
+            });
         }
 
         // ============ ORGANIZATION MODULES (Demo gets all modules, legacy system) ============
         if (!await context.OrganizationModules.AnyAsync())
         {
             logger.LogInformation("Seeding demo organization modules...");
-            foreach (var moduleId in new[] { SalesModuleId, InventoryModuleId, PurchasingModuleId, AccountingModuleId, HrmModuleId, ProjectsModuleId, QualityModuleId, AnalyticsModuleId, AssetsModuleId })
+            await RunInTransactionAsync(context, async () =>
             {
-                await context.Database.ExecuteSqlAsync($@"
-                    INSERT INTO ""OrganizationModules"" (""Id"", ""OrganizationId"", ""ModuleId"", ""ActivatedAt"", ""ActivatedBy"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                    ({Guid.NewGuid()}, {DemoOrganizationId}, {moduleId}, {now}, 'SYSTEM', FALSE, {now}, {now})");
-            }
+                foreach (var moduleId in new[] { SalesModuleId, InventoryModuleId, PurchasingModuleId, AccountingModuleId, HrmModuleId, ProjectsModuleId, QualityModuleId, AnalyticsModuleId, AssetsModuleId })
+                {
+                    await context.Database.ExecuteSqlAsync($@"
+                        INSERT INTO ""OrganizationModules"" (""Id"", ""OrganizationId"", ""ModuleId"", ""ActivatedAt"", ""ActivatedBy"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                        ({Guid.NewGuid()}, {DemoOrganizationId}, {moduleId}, {now}, 'SYSTEM', FALSE, {now}, {now})");
+                }
+            });
         }
 
         await SeedOrganizationSettingsAsync(context, logger, now);
@@ -291,44 +329,50 @@ public static class DatabaseSeeder
         if (!await context.Departments.IgnoreQueryFilters().AnyAsync())
         {
             logger.LogInformation("Seeding departments...");
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""Departments"" (""Id"", ""OrganizationId"", ""Name"", ""Code"", ""Description"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({EngineeringDeptId}, {DemoOrganizationId}, 'Engineering', 'ENG', 'Software Engineering Department', TRUE, FALSE, {now}, {now})");
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""Departments"" (""Id"", ""OrganizationId"", ""Name"", ""Code"", ""Description"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({HrDeptId}, {DemoOrganizationId}, 'Human Resources', 'HR', 'HR Management Department', TRUE, FALSE, {now}, {now})");
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""Departments"" (""Id"", ""OrganizationId"", ""Name"", ""Code"", ""Description"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({FinanceDeptId}, {DemoOrganizationId}, 'Finance', 'FIN', 'Finance & Accounting Department', TRUE, FALSE, {now}, {now})");
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""Departments"" (""Id"", ""OrganizationId"", ""Name"", ""Code"", ""Description"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({SalesDeptId}, {DemoOrganizationId}, 'Sales', 'SLS', 'Sales & Marketing Department', TRUE, FALSE, {now}, {now})");
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""Departments"" (""Id"", ""OrganizationId"", ""Name"", ""Code"", ""Description"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({WarehouseDeptId}, {DemoOrganizationId}, 'Warehouse', 'WHS', 'Warehouse & Logistics Department', TRUE, FALSE, {now}, {now})");
+            await RunInTransactionAsync(context, async () =>
+            {
+                await context.Database.ExecuteSqlAsync($@"
+                    INSERT INTO ""Departments"" (""Id"", ""OrganizationId"", ""Name"", ""Code"", ""Description"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                    ({EngineeringDeptId}, {DemoOrganizationId}, 'Engineering', 'ENG', 'Software Engineering Department', TRUE, FALSE, {now}, {now})");
+                await context.Database.ExecuteSqlAsync($@"
+                    INSERT INTO ""Departments"" (""Id"", ""OrganizationId"", ""Name"", ""Code"", ""Description"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                    ({HrDeptId}, {DemoOrganizationId}, 'Human Resources', 'HR', 'HR Management Department', TRUE, FALSE, {now}, {now})");
+                await context.Database.ExecuteSqlAsync($@"
+                    INSERT INTO ""Departments"" (""Id"", ""OrganizationId"", ""Name"", ""Code"", ""Description"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                    ({FinanceDeptId}, {DemoOrganizationId}, 'Finance', 'FIN', 'Finance & Accounting Department', TRUE, FALSE, {now}, {now})");
+                await context.Database.ExecuteSqlAsync($@"
+                    INSERT INTO ""Departments"" (""Id"", ""OrganizationId"", ""Name"", ""Code"", ""Description"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                    ({SalesDeptId}, {DemoOrganizationId}, 'Sales', 'SLS', 'Sales & Marketing Department', TRUE, FALSE, {now}, {now})");
+                await context.Database.ExecuteSqlAsync($@"
+                    INSERT INTO ""Departments"" (""Id"", ""OrganizationId"", ""Name"", ""Code"", ""Description"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                    ({WarehouseDeptId}, {DemoOrganizationId}, 'Warehouse', 'WHS', 'Warehouse & Logistics Department', TRUE, FALSE, {now}, {now})");
+            });
         }
 
         if (!await context.Positions.IgnoreQueryFilters().AnyAsync())
         {
             logger.LogInformation("Seeding positions...");
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""Positions"" (""Id"", ""OrganizationId"", ""DepartmentId"", ""Title"", ""Description"", ""Grade"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({EngineeringPositionId}, {DemoOrganizationId}, {EngineeringDeptId}, 'Software Engineer', 'Entry-level software developer', 1, TRUE, FALSE, {now}, {now})");
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""Positions"" (""Id"", ""OrganizationId"", ""DepartmentId"", ""Title"", ""Description"", ""Grade"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({HrPositionId}, {DemoOrganizationId}, {HrDeptId}, 'HR Staff', 'Human Resources Officer', 1, TRUE, FALSE, {now}, {now})");
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""Positions"" (""Id"", ""OrganizationId"", ""DepartmentId"", ""Title"", ""Description"", ""Grade"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({ManagerPositionId}, {DemoOrganizationId}, {EngineeringDeptId}, 'Engineering Manager', 'Engineering Team Lead', 5, TRUE, FALSE, {now}, {now})");
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""Positions"" (""Id"", ""OrganizationId"", ""DepartmentId"", ""Title"", ""Description"", ""Grade"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({FinancePositionId}, {DemoOrganizationId}, {FinanceDeptId}, 'Finance Staff', 'Finance & Accounting Officer', 1, TRUE, FALSE, {now}, {now})");
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""Positions"" (""Id"", ""OrganizationId"", ""DepartmentId"", ""Title"", ""Description"", ""Grade"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({SalesPositionId}, {DemoOrganizationId}, {SalesDeptId}, 'Sales Executive', 'Sales & Marketing Officer', 1, TRUE, FALSE, {now}, {now})");
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""Positions"" (""Id"", ""OrganizationId"", ""DepartmentId"", ""Title"", ""Description"", ""Grade"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({WarehousePositionId}, {DemoOrganizationId}, {WarehouseDeptId}, 'Warehouse Staff', 'Warehouse & Logistics Officer', 1, TRUE, FALSE, {now}, {now})");
+            await RunInTransactionAsync(context, async () =>
+            {
+                await context.Database.ExecuteSqlAsync($@"
+                    INSERT INTO ""Positions"" (""Id"", ""OrganizationId"", ""DepartmentId"", ""Title"", ""Description"", ""Grade"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                    ({EngineeringPositionId}, {DemoOrganizationId}, {EngineeringDeptId}, 'Software Engineer', 'Entry-level software developer', 1, TRUE, FALSE, {now}, {now})");
+                await context.Database.ExecuteSqlAsync($@"
+                    INSERT INTO ""Positions"" (""Id"", ""OrganizationId"", ""DepartmentId"", ""Title"", ""Description"", ""Grade"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                    ({HrPositionId}, {DemoOrganizationId}, {HrDeptId}, 'HR Staff', 'Human Resources Officer', 1, TRUE, FALSE, {now}, {now})");
+                await context.Database.ExecuteSqlAsync($@"
+                    INSERT INTO ""Positions"" (""Id"", ""OrganizationId"", ""DepartmentId"", ""Title"", ""Description"", ""Grade"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                    ({ManagerPositionId}, {DemoOrganizationId}, {EngineeringDeptId}, 'Engineering Manager', 'Engineering Team Lead', 5, TRUE, FALSE, {now}, {now})");
+                await context.Database.ExecuteSqlAsync($@"
+                    INSERT INTO ""Positions"" (""Id"", ""OrganizationId"", ""DepartmentId"", ""Title"", ""Description"", ""Grade"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                    ({FinancePositionId}, {DemoOrganizationId}, {FinanceDeptId}, 'Finance Staff', 'Finance & Accounting Officer', 1, TRUE, FALSE, {now}, {now})");
+                await context.Database.ExecuteSqlAsync($@"
+                    INSERT INTO ""Positions"" (""Id"", ""OrganizationId"", ""DepartmentId"", ""Title"", ""Description"", ""Grade"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                    ({SalesPositionId}, {DemoOrganizationId}, {SalesDeptId}, 'Sales Executive', 'Sales & Marketing Officer', 1, TRUE, FALSE, {now}, {now})");
+                await context.Database.ExecuteSqlAsync($@"
+                    INSERT INTO ""Positions"" (""Id"", ""OrganizationId"", ""DepartmentId"", ""Title"", ""Description"", ""Grade"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                    ({WarehousePositionId}, {DemoOrganizationId}, {WarehouseDeptId}, 'Warehouse Staff', 'Warehouse & Logistics Officer', 1, TRUE, FALSE, {now}, {now})");
+            });
         }
     }
 
@@ -391,20 +435,27 @@ public static class DatabaseSeeder
              new DateTime(1988, 7, 25, 0, 0, 0, DateTimeKind.Utc), new DateTime(2020, 3, 16, 0, 0, 0, DateTimeKind.Utc), 8500000m, "+62819-0123-4008"),
         };
 
-        foreach (var e in employees)
+        // One transaction for the whole roster: a failure partway (e.g. a dropped
+        // connection on employee #5) rolls back every employee inserted so far,
+        // so the AnyAsync() guard above still sees an empty table and retries
+        // the full roster on the next startup instead of leaving it half-seeded.
+        await RunInTransactionAsync(context, async () =>
         {
-            // Each employee gets its own login (Employees "extends" Users with HR
-            // data via the UserId FK) - no role assigned, so logging in as one
-            // yields an authenticated but unprivileged account, same as a real
-            // non-admin hire would have until granted a role.
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""Users"" (""Id"", ""OrganizationId"", ""Username"", ""Email"", ""PasswordHash"", ""FirstName"", ""LastName"", ""Phone"", ""IsActive"", ""IsSuperAdmin"", ""FailedLoginAttempts"", ""LockedUntil"", ""LastLoginAt"", ""LastLoginIp"", ""RefreshTokenHash"", ""RefreshTokenExpiry"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({e.UserId}, {DemoOrganizationId}, {e.Username}, {e.Email}, {employeePasswordHash}, {e.FirstName}, {e.LastName}, {e.Phone}, TRUE, FALSE, 0, NULL, NULL, NULL, NULL, NULL, FALSE, {now}, {now})");
+            foreach (var e in employees)
+            {
+                // Each employee gets its own login (Employees "extends" Users with HR
+                // data via the UserId FK) - no role assigned, so logging in as one
+                // yields an authenticated but unprivileged account, same as a real
+                // non-admin hire would have until granted a role.
+                await context.Database.ExecuteSqlAsync($@"
+                    INSERT INTO ""Users"" (""Id"", ""OrganizationId"", ""Username"", ""Email"", ""PasswordHash"", ""FirstName"", ""LastName"", ""Phone"", ""IsActive"", ""IsSuperAdmin"", ""FailedLoginAttempts"", ""LockedUntil"", ""LastLoginAt"", ""LastLoginIp"", ""RefreshTokenHash"", ""RefreshTokenExpiry"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                    ({e.UserId}, {DemoOrganizationId}, {e.Username}, {e.Email}, {employeePasswordHash}, {e.FirstName}, {e.LastName}, {e.Phone}, TRUE, FALSE, 0, NULL, NULL, NULL, NULL, NULL, FALSE, {now}, {now})");
 
-            await context.Database.ExecuteSqlAsync($@"
-                INSERT INTO ""Employees"" (""Id"", ""OrganizationId"", ""EmployeeNumber"", ""UserId"", ""FirstName"", ""LastName"", ""DateOfBirth"", ""Gender"", ""MaritalStatus"", ""DepartmentId"", ""PositionId"", ""EmploymentType"", ""Status"", ""HireDate"", ""BasicSalary"", ""PersonalEmail"", ""Phone"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-                ({e.EmployeeId}, {DemoOrganizationId}, {e.EmployeeNumber}, {e.UserId}, {e.FirstName}, {e.LastName}, {e.DateOfBirth}, {e.Gender}, {e.MaritalStatus}, {e.DepartmentId}, {e.PositionId}, {e.EmploymentType}, 1, {e.HireDate}, {e.BasicSalary}, {e.Email}, {e.Phone}, FALSE, {now}, {now})");
-        }
+                await context.Database.ExecuteSqlAsync($@"
+                    INSERT INTO ""Employees"" (""Id"", ""OrganizationId"", ""EmployeeNumber"", ""UserId"", ""FirstName"", ""LastName"", ""DateOfBirth"", ""Gender"", ""MaritalStatus"", ""DepartmentId"", ""PositionId"", ""EmploymentType"", ""Status"", ""HireDate"", ""BasicSalary"", ""PersonalEmail"", ""Phone"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                    ({e.EmployeeId}, {DemoOrganizationId}, {e.EmployeeNumber}, {e.UserId}, {e.FirstName}, {e.LastName}, {e.DateOfBirth}, {e.Gender}, {e.MaritalStatus}, {e.DepartmentId}, {e.PositionId}, {e.EmploymentType}, 1, {e.HireDate}, {e.BasicSalary}, {e.Email}, {e.Phone}, FALSE, {now}, {now})");
+            }
+        });
     }
 
     public static async Task SeedWarehousesAsync(ERPDbContext context, ILogger logger, DateTime now)
@@ -413,12 +464,15 @@ public static class DatabaseSeeder
             return;
 
         logger.LogInformation("Seeding warehouses...");
-        await context.Database.ExecuteSqlAsync($@"
-            INSERT INTO ""Warehouses"" (""Id"", ""OrganizationId"", ""Name"", ""Code"", ""Description"", ""Address"", ""City"", ""Country"", ""Phone"", ""Email"", ""IsActive"", ""IsDefault"", ""AllowsNegativeStock"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-            ({MainWarehouseId}, {DemoOrganizationId}, 'Main Warehouse', 'WH001', 'Primary storage facility', 'Jl. Sudirman No. 1', 'Jakarta', 'Indonesia', '+6221-555-0001', 'warehouse@nexterp.com', TRUE, TRUE, FALSE, FALSE, {now}, {now})");
-        await context.Database.ExecuteSqlAsync($@"
-            INSERT INTO ""Warehouses"" (""Id"", ""OrganizationId"", ""Name"", ""Code"", ""Description"", ""Address"", ""City"", ""Country"", ""Phone"", ""Email"", ""IsActive"", ""IsDefault"", ""AllowsNegativeStock"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-            ({SecondaryWarehouseId}, {DemoOrganizationId}, 'Secondary Warehouse', 'WH002', 'Backup storage facility', 'Jl. Gatot Subroto No. 50', 'Surabaya', 'Indonesia', '+6231-555-0002', 'warehouse2@nexterp.com', TRUE, FALSE, TRUE, FALSE, {now}, {now})");
+        await RunInTransactionAsync(context, async () =>
+        {
+            await context.Database.ExecuteSqlAsync($@"
+                INSERT INTO ""Warehouses"" (""Id"", ""OrganizationId"", ""Name"", ""Code"", ""Description"", ""Address"", ""City"", ""Country"", ""Phone"", ""Email"", ""IsActive"", ""IsDefault"", ""AllowsNegativeStock"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                ({MainWarehouseId}, {DemoOrganizationId}, 'Main Warehouse', 'WH001', 'Primary storage facility', 'Jl. Sudirman No. 1', 'Jakarta', 'Indonesia', '+6221-555-0001', 'warehouse@nexterp.com', TRUE, TRUE, FALSE, FALSE, {now}, {now})");
+            await context.Database.ExecuteSqlAsync($@"
+                INSERT INTO ""Warehouses"" (""Id"", ""OrganizationId"", ""Name"", ""Code"", ""Description"", ""Address"", ""City"", ""Country"", ""Phone"", ""Email"", ""IsActive"", ""IsDefault"", ""AllowsNegativeStock"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                ({SecondaryWarehouseId}, {DemoOrganizationId}, 'Secondary Warehouse', 'WH002', 'Backup storage facility', 'Jl. Gatot Subroto No. 50', 'Surabaya', 'Indonesia', '+6231-555-0002', 'warehouse2@nexterp.com', TRUE, FALSE, TRUE, FALSE, {now}, {now})");
+        });
     }
 
     public static async Task SeedCustomersAsync(ERPDbContext context, ILogger logger, DateTime now)
@@ -427,15 +481,18 @@ public static class DatabaseSeeder
             return;
 
         logger.LogInformation("Seeding customers...");
-        await context.Database.ExecuteSqlAsync($@"
-            INSERT INTO ""Customers"" (""Id"", ""OrganizationId"", ""CustomerCode"", ""CustomerName"", ""Type"", ""Email"", ""Phone"", ""OutstandingAmount"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-            ({Guid.NewGuid()}, {DemoOrganizationId}, 'CUST001', 'PT Maju Bersama', 2, 'contact@majubersama.co.id', '+6221-888-0001', 0, TRUE, FALSE, {now}, {now})");
-        await context.Database.ExecuteSqlAsync($@"
-            INSERT INTO ""Customers"" (""Id"", ""OrganizationId"", ""CustomerCode"", ""CustomerName"", ""Type"", ""Email"", ""Phone"", ""OutstandingAmount"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-            ({Guid.NewGuid()}, {DemoOrganizationId}, 'CUST002', 'CV Sejahtera Utama', 2, 'info@sejahtera.co.id', '+6221-888-0002', 0, TRUE, FALSE, {now}, {now})");
-        await context.Database.ExecuteSqlAsync($@"
-            INSERT INTO ""Customers"" (""Id"", ""OrganizationId"", ""CustomerCode"", ""CustomerName"", ""Type"", ""Email"", ""Phone"", ""OutstandingAmount"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-            ({Guid.NewGuid()}, {DemoOrganizationId}, 'CUST003', 'Toko Elektronik Jaya', 1, 'jaya@electronics.com', '+6281-234-5678', 0, TRUE, FALSE, {now}, {now})");
+        await RunInTransactionAsync(context, async () =>
+        {
+            await context.Database.ExecuteSqlAsync($@"
+                INSERT INTO ""Customers"" (""Id"", ""OrganizationId"", ""CustomerCode"", ""CustomerName"", ""Type"", ""Email"", ""Phone"", ""OutstandingAmount"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                ({Guid.NewGuid()}, {DemoOrganizationId}, 'CUST001', 'PT Maju Bersama', 2, 'contact@majubersama.co.id', '+6221-888-0001', 0, TRUE, FALSE, {now}, {now})");
+            await context.Database.ExecuteSqlAsync($@"
+                INSERT INTO ""Customers"" (""Id"", ""OrganizationId"", ""CustomerCode"", ""CustomerName"", ""Type"", ""Email"", ""Phone"", ""OutstandingAmount"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                ({Guid.NewGuid()}, {DemoOrganizationId}, 'CUST002', 'CV Sejahtera Utama', 2, 'info@sejahtera.co.id', '+6221-888-0002', 0, TRUE, FALSE, {now}, {now})");
+            await context.Database.ExecuteSqlAsync($@"
+                INSERT INTO ""Customers"" (""Id"", ""OrganizationId"", ""CustomerCode"", ""CustomerName"", ""Type"", ""Email"", ""Phone"", ""OutstandingAmount"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                ({Guid.NewGuid()}, {DemoOrganizationId}, 'CUST003', 'Toko Elektronik Jaya', 1, 'jaya@electronics.com', '+6281-234-5678', 0, TRUE, FALSE, {now}, {now})");
+        });
     }
 
     public static async Task SeedSuppliersAsync(ERPDbContext context, ILogger logger, DateTime now)
@@ -444,15 +501,18 @@ public static class DatabaseSeeder
             return;
 
         logger.LogInformation("Seeding suppliers...");
-        await context.Database.ExecuteSqlAsync($@"
-            INSERT INTO ""Suppliers"" (""Id"", ""OrganizationId"", ""SupplierCode"", ""SupplierName"", ""Type"", ""Email"", ""Phone"", ""OutstandingAmount"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-            ({Guid.NewGuid()}, {DemoOrganizationId}, 'SUP001', 'PT Sumber Prima', 2, 'sales@sumberprima.co.id', '+6221-555-1001', 0, TRUE, FALSE, {now}, {now})");
-        await context.Database.ExecuteSqlAsync($@"
-            INSERT INTO ""Suppliers"" (""Id"", ""OrganizationId"", ""SupplierCode"", ""SupplierName"", ""Type"", ""Email"", ""Phone"", ""OutstandingAmount"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-            ({Guid.NewGuid()}, {DemoOrganizationId}, 'SUP002', 'CV Elektronik Grosir', 2, 'order@elegrosir.com', '+6221-555-1002', 0, TRUE, FALSE, {now}, {now})");
-        await context.Database.ExecuteSqlAsync($@"
-            INSERT INTO ""Suppliers"" (""Id"", ""OrganizationId"", ""SupplierCode"", ""SupplierName"", ""Type"", ""Email"", ""Phone"", ""OutstandingAmount"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-            ({Guid.NewGuid()}, {DemoOrganizationId}, 'SUP003', 'Toko Parts Automotive', 1, 'parts@automotive.com', '+6281-333-4444', 0, TRUE, FALSE, {now}, {now})");
+        await RunInTransactionAsync(context, async () =>
+        {
+            await context.Database.ExecuteSqlAsync($@"
+                INSERT INTO ""Suppliers"" (""Id"", ""OrganizationId"", ""SupplierCode"", ""SupplierName"", ""Type"", ""Email"", ""Phone"", ""OutstandingAmount"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                ({Guid.NewGuid()}, {DemoOrganizationId}, 'SUP001', 'PT Sumber Prima', 2, 'sales@sumberprima.co.id', '+6221-555-1001', 0, TRUE, FALSE, {now}, {now})");
+            await context.Database.ExecuteSqlAsync($@"
+                INSERT INTO ""Suppliers"" (""Id"", ""OrganizationId"", ""SupplierCode"", ""SupplierName"", ""Type"", ""Email"", ""Phone"", ""OutstandingAmount"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                ({Guid.NewGuid()}, {DemoOrganizationId}, 'SUP002', 'CV Elektronik Grosir', 2, 'order@elegrosir.com', '+6221-555-1002', 0, TRUE, FALSE, {now}, {now})");
+            await context.Database.ExecuteSqlAsync($@"
+                INSERT INTO ""Suppliers"" (""Id"", ""OrganizationId"", ""SupplierCode"", ""SupplierName"", ""Type"", ""Email"", ""Phone"", ""OutstandingAmount"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                ({Guid.NewGuid()}, {DemoOrganizationId}, 'SUP003', 'Toko Parts Automotive', 1, 'parts@automotive.com', '+6281-333-4444', 0, TRUE, FALSE, {now}, {now})");
+        });
     }
 
     public static async Task SeedOrganizationSettingsAsync(ERPDbContext context, ILogger logger, DateTime now)
@@ -462,35 +522,38 @@ public static class DatabaseSeeder
 
         logger.LogInformation("Seeding default organization settings...");
 
-        // HR Settings (Indonesian labor law defaults)
-        await context.Database.ExecuteSqlAsync($@"
-            INSERT INTO ""OrganizationSettings"" (""Id"", ""OrganizationId"", ""SettingKey"", ""SettingValue"", ""Category"", ""IsEncrypted"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-            ({Guid.NewGuid()}, {DemoOrganizationId}, 'HR.OVERTIME.MAX_DAILY_HOURS', '4', 'HR', FALSE, FALSE, {now}, {now})");
-        await context.Database.ExecuteSqlAsync($@"
-            INSERT INTO ""OrganizationSettings"" (""Id"", ""OrganizationId"", ""SettingKey"", ""SettingValue"", ""Category"", ""IsEncrypted"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-            ({Guid.NewGuid()}, {DemoOrganizationId}, 'HR.OVERTIME.MAX_WEEKLY_HOURS', '18', 'HR', FALSE, FALSE, {now}, {now})");
-        await context.Database.ExecuteSqlAsync($@"
-            INSERT INTO ""OrganizationSettings"" (""Id"", ""OrganizationId"", ""SettingKey"", ""SettingValue"", ""Category"", ""IsEncrypted"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-            ({Guid.NewGuid()}, {DemoOrganizationId}, 'HR.LEAVE.ANNUAL_DEFAULT_DAYS', '12', 'HR', FALSE, FALSE, {now}, {now})");
+        await RunInTransactionAsync(context, async () =>
+        {
+            // HR Settings (Indonesian labor law defaults)
+            await context.Database.ExecuteSqlAsync($@"
+                INSERT INTO ""OrganizationSettings"" (""Id"", ""OrganizationId"", ""SettingKey"", ""SettingValue"", ""Category"", ""IsEncrypted"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                ({Guid.NewGuid()}, {DemoOrganizationId}, 'HR.OVERTIME.MAX_DAILY_HOURS', '4', 'HR', FALSE, FALSE, {now}, {now})");
+            await context.Database.ExecuteSqlAsync($@"
+                INSERT INTO ""OrganizationSettings"" (""Id"", ""OrganizationId"", ""SettingKey"", ""SettingValue"", ""Category"", ""IsEncrypted"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                ({Guid.NewGuid()}, {DemoOrganizationId}, 'HR.OVERTIME.MAX_WEEKLY_HOURS', '18', 'HR', FALSE, FALSE, {now}, {now})");
+            await context.Database.ExecuteSqlAsync($@"
+                INSERT INTO ""OrganizationSettings"" (""Id"", ""OrganizationId"", ""SettingKey"", ""SettingValue"", ""Category"", ""IsEncrypted"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                ({Guid.NewGuid()}, {DemoOrganizationId}, 'HR.LEAVE.ANNUAL_DEFAULT_DAYS', '12', 'HR', FALSE, FALSE, {now}, {now})");
 
-        // Accounting Settings
-        await context.Database.ExecuteSqlAsync($@"
-            INSERT INTO ""OrganizationSettings"" (""Id"", ""OrganizationId"", ""SettingKey"", ""SettingValue"", ""Category"", ""IsEncrypted"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-            ({Guid.NewGuid()}, {DemoOrganizationId}, 'ACC.DEFAULT_TERM_DAYS', '30', 'ACCOUNTING', FALSE, FALSE, {now}, {now})");
-        await context.Database.ExecuteSqlAsync($@"
-            INSERT INTO ""OrganizationSettings"" (""Id"", ""OrganizationId"", ""SettingKey"", ""SettingValue"", ""Category"", ""IsEncrypted"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-            ({Guid.NewGuid()}, {DemoOrganizationId}, 'ACC.DEFAULT_TAX_RATE', '11', 'ACCOUNTING', FALSE, FALSE, {now}, {now})");
-        await context.Database.ExecuteSqlAsync($@"
-            INSERT INTO ""OrganizationSettings"" (""Id"", ""OrganizationId"", ""SettingKey"", ""SettingValue"", ""Category"", ""IsEncrypted"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-            ({Guid.NewGuid()}, {DemoOrganizationId}, 'ACC.DEFAULT_CURRENCY', 'IDR', 'ACCOUNTING', FALSE, FALSE, {now}, {now})");
+            // Accounting Settings
+            await context.Database.ExecuteSqlAsync($@"
+                INSERT INTO ""OrganizationSettings"" (""Id"", ""OrganizationId"", ""SettingKey"", ""SettingValue"", ""Category"", ""IsEncrypted"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                ({Guid.NewGuid()}, {DemoOrganizationId}, 'ACC.DEFAULT_TERM_DAYS', '30', 'ACCOUNTING', FALSE, FALSE, {now}, {now})");
+            await context.Database.ExecuteSqlAsync($@"
+                INSERT INTO ""OrganizationSettings"" (""Id"", ""OrganizationId"", ""SettingKey"", ""SettingValue"", ""Category"", ""IsEncrypted"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                ({Guid.NewGuid()}, {DemoOrganizationId}, 'ACC.DEFAULT_TAX_RATE', '11', 'ACCOUNTING', FALSE, FALSE, {now}, {now})");
+            await context.Database.ExecuteSqlAsync($@"
+                INSERT INTO ""OrganizationSettings"" (""Id"", ""OrganizationId"", ""SettingKey"", ""SettingValue"", ""Category"", ""IsEncrypted"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                ({Guid.NewGuid()}, {DemoOrganizationId}, 'ACC.DEFAULT_CURRENCY', 'IDR', 'ACCOUNTING', FALSE, FALSE, {now}, {now})");
 
-        // General Settings
-        await context.Database.ExecuteSqlAsync($@"
-            INSERT INTO ""OrganizationSettings"" (""Id"", ""OrganizationId"", ""SettingKey"", ""SettingValue"", ""Category"", ""IsEncrypted"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-            ({Guid.NewGuid()}, {DemoOrganizationId}, 'GENERAL.TIMEZONE', 'Asia/Jakarta', 'GENERAL', FALSE, FALSE, {now}, {now})");
-        await context.Database.ExecuteSqlAsync($@"
-            INSERT INTO ""OrganizationSettings"" (""Id"", ""OrganizationId"", ""SettingKey"", ""SettingValue"", ""Category"", ""IsEncrypted"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
-            ({Guid.NewGuid()}, {DemoOrganizationId}, 'GENERAL.DATE_FORMAT', 'dd/MM/yyyy', 'GENERAL', FALSE, FALSE, {now}, {now})");
+            // General Settings
+            await context.Database.ExecuteSqlAsync($@"
+                INSERT INTO ""OrganizationSettings"" (""Id"", ""OrganizationId"", ""SettingKey"", ""SettingValue"", ""Category"", ""IsEncrypted"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                ({Guid.NewGuid()}, {DemoOrganizationId}, 'GENERAL.TIMEZONE', 'Asia/Jakarta', 'GENERAL', FALSE, FALSE, {now}, {now})");
+            await context.Database.ExecuteSqlAsync($@"
+                INSERT INTO ""OrganizationSettings"" (""Id"", ""OrganizationId"", ""SettingKey"", ""SettingValue"", ""Category"", ""IsEncrypted"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"") VALUES
+                ({Guid.NewGuid()}, {DemoOrganizationId}, 'GENERAL.DATE_FORMAT', 'dd/MM/yyyy', 'GENERAL', FALSE, FALSE, {now}, {now})");
+        });
     }
 }
 #pragma warning restore EF1002
