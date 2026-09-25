@@ -62,12 +62,26 @@ jobs:
         run: railway up --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT"
 
       - name: Set Railway Variables
+        # JWT_SECRET_KEY/REDIS_CONNECTION_STRING come from GitHub secrets - if
+        # either one isn't set, $VAR expands to an empty string and this used
+        # to happily `railway variables set` it anyway, blanking out whatever
+        # value Railway already had and crash-looping the service (empty
+        # Jwt:SecretKey / Redis:ConnectionString). Skip the write instead of
+        # clobbering a working value with nothing.
         run: |
           railway variables set ASPNETCORE_ENVIRONMENT=Production --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT"
-          railway variables set Jwt:SecretKey=$JWT_SECRET_KEY --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT"
+          if [ -n "$JWT_SECRET_KEY" ]; then
+            railway variables set "Jwt:SecretKey=$JWT_SECRET_KEY" --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT"
+          else
+            echo "::warning::JWT_SECRET_KEY secret is empty - leaving Railway's existing Jwt:SecretKey untouched"
+          fi
           railway variables set Jwt:AccessTokenExpirationMinutes=15 --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT"
           railway variables set Jwt:RefreshTokenExpirationDays=7 --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT"
-          railway variables set Redis:ConnectionString=$REDIS_CONNECTION_STRING --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT"
+          if [ -n "$REDIS_CONNECTION_STRING" ]; then
+            railway variables set "Redis:ConnectionString=$REDIS_CONNECTION_STRING" --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT"
+          else
+            echo "::warning::REDIS_CONNECTION_STRING secret is empty - leaving Railway's existing Redis:ConnectionString untouched"
+          fi
         env:
           JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
           REDIS_CONNECTION_STRING: ${{ secrets.REDIS_CONNECTION_STRING }}
