@@ -501,40 +501,16 @@ using (var scope = app.Services.CreateScope())
             WHERE NOT EXISTS (SELECT 1 FROM ""UserRoles"" WHERE ""UserId"" = '{demoUserId}' AND ""RoleId"" = '{adminRoleId}');
         ");
 
-        // Seed Departments
-        var engineeringDeptId = Guid.Parse("00000000-0000-0000-0000-000000000010");
-        var hrDeptId = Guid.Parse("00000000-0000-0000-0000-000000000011");
-        var financeDeptId = Guid.Parse("00000000-0000-0000-0000-000000000012");
-        await dbContext.Database.ExecuteSqlRawAsync($@"
-            INSERT INTO ""Departments"" (""Id"", ""OrganizationId"", ""Name"", ""Code"", ""Description"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"")
-            VALUES
-            ('{engineeringDeptId}', '{demoOrgId}', 'Engineering', 'ENG', 'Engineering Department', TRUE, FALSE, NOW(), NOW()),
-            ('{hrDeptId}', '{demoOrgId}', 'Human Resources', 'HR', 'Human Resources Department', TRUE, FALSE, NOW(), NOW()),
-            ('{financeDeptId}', '{demoOrgId}', 'Finance', 'FIN', 'Finance Department', TRUE, FALSE, NOW(), NOW())
-            ON CONFLICT (""Id"") DO NOTHING;
-        ");
-
-        // Seed Positions (schema: Title, Grade, DepartmentId — no Name/Code columns)
-        var engineerPosId = Guid.Parse("00000000-0000-0000-0000-000000000020");
-        var hrPosId = Guid.Parse("00000000-0000-0000-0000-000000000021");
-        var managerPosId = Guid.Parse("00000000-0000-0000-0000-000000000022");
-        await dbContext.Database.ExecuteSqlRawAsync($@"
-            INSERT INTO ""Positions"" (""Id"", ""OrganizationId"", ""DepartmentId"", ""Title"", ""Description"", ""Grade"", ""IsActive"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"")
-            VALUES
-            ('{engineerPosId}', '{demoOrgId}', '{engineeringDeptId}', 'Software Engineer', 'Entry-level software developer', 1, TRUE, FALSE, NOW(), NOW()),
-            ('{hrPosId}', '{demoOrgId}', '{hrDeptId}', 'HR Manager', 'Human Resources Manager', 3, TRUE, FALSE, NOW(), NOW()),
-            ('{managerPosId}', '{demoOrgId}', '{engineeringDeptId}', 'Department Manager', 'Department Manager', 5, TRUE, FALSE, NOW(), NOW())
-            ON CONFLICT (""Id"") DO NOTHING;
-        ");
-
-        // Seed Warehouses
-        var mainWhId = Guid.Parse("00000000-0000-0000-0000-000000000030");
-        await dbContext.Database.ExecuteSqlRawAsync($@"
-            INSERT INTO ""Warehouses"" (""Id"", ""OrganizationId"", ""Name"", ""Code"", ""Description"", ""Address"", ""City"", ""Country"", ""Phone"", ""Email"", ""IsActive"", ""IsDefault"", ""AllowsNegativeStock"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"")
-            VALUES
-            ('{mainWhId}', '{demoOrgId}', 'Main Warehouse', 'WH001', 'Main storage warehouse', '123 Industrial Ave', 'Jakarta', 'Indonesia', '+6221123456', 'warehouse@nexterp.com', TRUE, TRUE, FALSE, FALSE, NOW(), NOW())
-            ON CONFLICT (""Id"") DO NOTHING;
-        ");
+        // Departments, positions, warehouses, sample customers/suppliers, a full
+        // employee roster and organization settings - each independently
+        // idempotent, richer than what used to be hardcoded inline here, and
+        // shared with DatabaseSeeder.SeedAsync's own from-scratch path.
+        await DatabaseSeeder.SeedDepartmentsAndPositionsAsync(dbContext, logger, DateTime.UtcNow);
+        await DatabaseSeeder.SeedWarehousesAsync(dbContext, logger, DateTime.UtcNow);
+        await DatabaseSeeder.SeedEmployeesAsync(dbContext, logger, DateTime.UtcNow);
+        await DatabaseSeeder.SeedCustomersAsync(dbContext, logger, DateTime.UtcNow);
+        await DatabaseSeeder.SeedSuppliersAsync(dbContext, logger, DateTime.UtcNow);
+        await DatabaseSeeder.SeedOrganizationSettingsAsync(dbContext, logger, DateTime.UtcNow);
 
         // Seed License Tiers
         var starterTierId = Guid.Parse("00000000-0000-0000-0000-000000000200");
