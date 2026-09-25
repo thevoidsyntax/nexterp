@@ -29,6 +29,13 @@ jobs:
       # The Railway CLI authenticates every command from this env var directly —
       # there is no separate `railway login --token` flag on current CLI versions.
       RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      # `up`/`variable`/`domain` all resolve against a *linked* project, and
+      # nothing here ever links one — that's why "Service not found" persisted
+      # even after the service ID and the token were both fixed. Passing
+      # --project explicitly is required; find the project ID on the Railway
+      # dashboard under Project Settings → General, and add it as this repo
+      # secret.
+      RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
     steps:
       - uses: actions/checkout@v4
 
@@ -43,24 +50,25 @@ jobs:
       - name: Deploy to Railway
         # Railway service ID (not the "ERP-API" name — that didn't resolve
         # against this project, "Service not found").
-        run: railway up --service 0b6e64f5-43c0-48b5-8088-35c77d43ce91
+        run: railway up --project "$RAILWAY_PROJECT_ID" --service 0b6e64f5-43c0-48b5-8088-35c77d43ce91
 
       - name: Set Railway Variables
         run: |
-          railway variables set ASPNETCORE_ENVIRONMENT=Production
-          railway variables set Jwt:SecretKey=$JWT_SECRET_KEY
-          railway variables set Jwt:AccessTokenExpirationMinutes=15
-          railway variables set Jwt:RefreshTokenExpirationDays=7
-          railway variables set Redis:ConnectionString=$REDIS_CONNECTION_STRING
+          railway variables set ASPNETCORE_ENVIRONMENT=Production --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID"
+          railway variables set Jwt:SecretKey=$JWT_SECRET_KEY --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID"
+          railway variables set Jwt:AccessTokenExpirationMinutes=15 --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID"
+          railway variables set Jwt:RefreshTokenExpirationDays=7 --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID"
+          railway variables set Redis:ConnectionString=$REDIS_CONNECTION_STRING --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID"
         env:
           JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
           REDIS_CONNECTION_STRING: ${{ secrets.REDIS_CONNECTION_STRING }}
+          RAILWAY_SERVICE_ID: 0b6e64f5-43c0-48b5-8088-35c77d43ce91
 
       - name: Wait for deployment
         run: sleep 20
 
       - name: Get Railway URL
-        run: railway domain list || echo "Check Railway dashboard"
+        run: railway domain list --project "$RAILWAY_PROJECT_ID" --service 0b6e64f5-43c0-48b5-8088-35c77d43ce91 || echo "Check Railway dashboard"
 
   # ─────────────────────────────────────────────────────
   # Vercel Frontend (Next.js)
