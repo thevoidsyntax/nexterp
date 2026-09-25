@@ -147,12 +147,38 @@ public static class ModuleConfigurationLoader
         foreach (var (name, entry) in manifest.Modules)
         {
             var config = LoadModuleConfig(name);
-            config.Enabled = entry.Enabled && config.Enabled;
+
+            // No modules/<name>/module.config.json file exists anywhere in this
+            // repo, so LoadModuleConfig always falls back to a blank default
+            // (empty Code/Tier, Enabled hardcoded false) here - the manifest
+            // itself is this app's actual module catalog. Without this, every
+            // module in GetAllModules()'s result shares the same empty Code,
+            // which collapses to one broken entry downstream (e.g. a React key
+            // collision on OrganizationModuleDto.moduleCode in the frontend).
+            if (string.IsNullOrEmpty(config.Code))
+            {
+                config.Code = name;
+                config.Tier = entry.Tier;
+                config.Module = TitleizeModuleName(name);
+                config.Enabled = entry.Enabled;
+                if (!string.IsNullOrEmpty(entry.Description))
+                    config.Settings["description"] = entry.Description;
+            }
+            else
+            {
+                config.Enabled = entry.Enabled && config.Enabled;
+            }
+
             result.Add(config);
         }
 
         return result;
     }
+
+    private static string TitleizeModuleName(string key) =>
+        key.Equals("hrm", StringComparison.OrdinalIgnoreCase)
+            ? "HRM"
+            : char.ToUpperInvariant(key[0]) + key[1..];
 
     /// <summary>
     /// Check if a module is enabled.

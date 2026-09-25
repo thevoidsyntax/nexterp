@@ -27,4 +27,15 @@
   <ItemGroup>
     <ProjectReference Include="..\ERP.Infrastructure\ERP.Infrastructure.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- ModuleConfigurationLoader.LoadManifest looks for this file at
+         "modules/module-manifest.json" relative to AppContext.BaseDirectory -
+         nothing previously copied it there, so GetAllModules() always
+         silently returned an empty list (the Modules page loaded with zero
+         rows and no error) in every environment, not just production. -->
+    <None Include="..\ERP.Application\Common\Modules\module-manifest.json"
+          Link="modules\module-manifest.json"
+          CopyToOutputDirectory="PreserveNewest"
+          CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>
