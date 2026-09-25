@@ -28,6 +28,9 @@ jobs:
     env:
       # The Railway CLI authenticates every command from this env var directly —
       # there is no separate `railway login --token` flag on current CLI versions.
+      # This is a *project* token, scoped to only the backend project below —
+      # it will not authenticate against the frontend project (see
+      # deploy-frontend's own RAILWAY_TOKEN_FRONTEND, a separate project token).
       RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
       # `up`/`variable`/`domain` all resolve against a *linked* project, and
       # nothing here ever links one — that's why "Service not found" persisted
@@ -84,7 +87,10 @@ jobs:
     environment: ${{ inputs.environment || 'production' }}
     needs: [deploy-backend]
     env:
-      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      # A *different* Railway project token than deploy-backend's RAILWAY_TOKEN -
+      # project tokens are scoped to one project each, and this job's project
+      # is not the same one the backend token was issued for.
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_FRONTEND }}
       # A separate Railway project from the API (see deploy-backend) - confirmed
       # as the project/service serving nexterp-frontend-production.up.railway.app.
       # A 3rd, unrelated ERP project also exists on this account; don't swap
