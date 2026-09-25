@@ -2,7 +2,7 @@
 
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Maximize2, Minimize2, EyeOff, Lock } from 'lucide-react';
+import { GripVertical, Maximize2, Minimize2, Eye, EyeOff, Lock } from 'lucide-react';
 import { Widget } from '@/stores/dashboardStore';
 import { useDashboardStore } from '@/stores/dashboardStore';
 import { cn } from '@/lib/utils';
@@ -44,15 +44,15 @@ export function WidgetWrapper({ widget, children, className }: WidgetWrapperProp
       ref={setNodeRef}
       style={style}
       className={cn(
-        'bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700',
+        'bg-surface rounded-xl border border-border-subtle',
         'transition-shadow duration-200',
-        isDragging && 'opacity-50 shadow-2xl ring-2 ring-blue-500 z-50',
+        isDragging && 'opacity-50 shadow-2xl ring-2 ring-primary z-50',
         sizeClasses[widget.size],
         className
       )}
     >
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700">
-        <h3 className="font-semibold text-sm text-slate-900 dark:text-white truncate">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border-subtle">
+        <h3 className="font-heading font-semibold text-sm text-foreground truncate">
           {widget.title}
         </h3>
 
@@ -61,12 +61,12 @@ export function WidgetWrapper({ widget, children, className }: WidgetWrapperProp
             <>
               <button
                 onClick={() => toggleWidget(widget.id)}
-                className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition"
+                className="p-1.5 rounded hover:bg-surface-muted text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition"
                 aria-label={widget.visible ? 'Hide widget' : 'Show widget'}
                 title={widget.visible ? 'Hide' : 'Show'}
               >
                 {widget.visible ? (
-                  <Maximize2 className="w-3.5 h-3.5" />
+                  <Eye className="w-3.5 h-3.5" />
                 ) : (
                   <EyeOff className="w-3.5 h-3.5" />
                 )}
@@ -79,7 +79,7 @@ export function WidgetWrapper({ widget, children, className }: WidgetWrapperProp
                   const nextSize = sizes[(currentIndex + 1) % sizes.length];
                   updateWidgetSize(widget.id, nextSize);
                 }}
-                className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition"
+                className="p-1.5 rounded hover:bg-surface-muted text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition"
                 aria-label="Resize widget"
                 title={`Size: ${widget.size}`}
               >
@@ -93,7 +93,7 @@ export function WidgetWrapper({ widget, children, className }: WidgetWrapperProp
               <div
                 {...attributes}
                 {...listeners}
-                className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 cursor-grab active:cursor-grabbing transition"
+                className="p-1.5 rounded hover:bg-surface-muted text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 cursor-grab active:cursor-grabbing transition"
                 aria-label="Drag to reorder"
                 title="Drag to reorder"
               >
