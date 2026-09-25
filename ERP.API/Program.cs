@@ -346,6 +346,7 @@ using (var scope = app.Services.CreateScope())
         await dbContext.Database.ExecuteSqlRawAsync(@"
             ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""RefreshTokenHash"" text;
             ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""RefreshTokenExpiry"" timestamp with time zone;
+            ALTER TABLE ""OrganizationModules"" ADD COLUMN IF NOT EXISTS ""ModuleCode"" text NOT NULL DEFAULT '';
         ");
         logger.LogInformation("Database schema fixes applied successfully");
 

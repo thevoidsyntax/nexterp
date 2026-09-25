@@ -25,15 +25,6 @@ jobs:
     name: Deploy Backend
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment || 'production' }}
-    # Overrides the workflow-level `cancel-in-progress: true` for this job only.
-    # That policy is fine for an idempotent `railway up` redeploy, but this job
-    # now also runs `dotnet ef database update` against the real production
-    # database - if a second push cancels this job mid-migration, production
-    # is left with a half-applied schema. Queue instead of cancelling here so a
-    # migration always finishes before the next run's migration/deploy starts.
-    concurrency:
-      group: deploy-backend-${{ github.ref }}
-      cancel-in-progress: false
     env:
       # The Railway CLI authenticates every command from this env var directly —
       # there is no separate `railway login --token` flag on current CLI versions.
@@ -64,32 +55,8 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Restore backend
-        run: dotnet restore ERP.API/ERP.API.csproj
-
-      - name: Install EF Core CLI tool
-        run: |
-          dotnet tool install --global dotnet-ef --version 10.0.12
-          echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
-
       - name: Install Railway CLI
         run: npm install -g @railway/cli
-
-      - name: Apply database migrations
-        # ci.yml applies migrations against its own ephemeral Postgres service, but
-        # nothing here ever applied them to Railway's actual production database -
-        # that's why 20260922114419_AddOrganizationModuleModuleCodeColumn (and any
-        # future migration) never reached it. `railway run` executes the command
-        # with this service's live Railway env vars injected (including
-        # ConnectionStrings__DefaultConnection), but that injection only happens in
-        # the child process railway run spawns - wrapping in `bash -c` (single
-        # quotes) defers the var's expansion until it's running inside that
-        # injected environment, instead of expanding to empty in this outer shell.
-        # Runs before `railway up` so the new container never starts against a
-        # schema older code already tolerated but this migration's dependents do not.
-        run: |
-          railway run --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT" -- \
-            bash -c 'dotnet ef database update --project ERP.Infrastructure --startup-project ERP.API -- "$ConnectionStrings__DefaultConnection"'
 
       - name: Deploy to Railway
         run: railway up --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT"
