@@ -346,6 +346,24 @@ using (var scope = app.Services.CreateScope())
         await dbContext.Database.ExecuteSqlRawAsync(@"
             ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""RefreshTokenHash"" text;
             ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""RefreshTokenExpiry"" timestamp with time zone;
+            CREATE TABLE IF NOT EXISTS ""OrganizationModules"" (
+                ""Id"" uuid NOT NULL,
+                ""OrganizationId"" uuid NOT NULL,
+                ""ModuleId"" uuid NOT NULL,
+                ""ModuleCode"" text NOT NULL DEFAULT '',
+                ""ActivatedAt"" timestamp with time zone NOT NULL DEFAULT NOW(),
+                ""ExpiresAt"" timestamp with time zone NULL,
+                ""ActivatedBy"" text NULL,
+                ""Notes"" text NULL,
+                ""ModuleDefinitionId"" uuid NULL,
+                ""IsDeleted"" boolean NOT NULL DEFAULT FALSE,
+                ""CreatedAt"" timestamp with time zone NOT NULL DEFAULT NOW(),
+                ""UpdatedAt"" timestamp with time zone NULL,
+                ""CreatedBy"" text NULL,
+                ""UpdatedBy"" text NULL,
+                CONSTRAINT ""PK_OrganizationModules"" PRIMARY KEY (""Id"")
+            );
+            CREATE INDEX IF NOT EXISTS ""IX_OrganizationModules_ModuleDefinitionId"" ON ""OrganizationModules"" (""ModuleDefinitionId"");
             ALTER TABLE ""OrganizationModules"" ADD COLUMN IF NOT EXISTS ""ModuleCode"" text NOT NULL DEFAULT '';
         ");
         logger.LogInformation("Database schema fixes applied successfully");
