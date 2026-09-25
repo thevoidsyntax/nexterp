@@ -49,7 +49,7 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+          <h1 className="text-2xl font-bold text-foreground">
             Welcome back, {user?.firstName || 'User'}!
           </h1>
           <p className="text-sm text-slate-500 mt-1">
@@ -65,7 +65,7 @@ export default function DashboardPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={fetchStats}
-            className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 text-sm transition"
+            className="flex items-center gap-2 px-3 py-2 bg-surface border border-border-subtle rounded-lg hover:bg-surface-muted text-sm transition"
             aria-label="Refresh data"
           >
             <RefreshCw className="w-4 h-4" />
@@ -76,8 +76,8 @@ export default function DashboardPage() {
             onClick={() => setLayoutLocked(!isLayoutLocked)}
             className={`flex items-center gap-2 px-3 py-2 border rounded-lg text-sm transition ${
               isLayoutLocked
-                ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400'
-                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'
+                ? 'bg-primary/10 border-primary/30 text-primary'
+                : 'bg-surface border-border-subtle text-slate-600 dark:text-slate-400 hover:bg-surface-muted'
             }`}
             aria-label={isLayoutLocked ? 'Unlock layout' : 'Lock layout'}
             title={isLayoutLocked ? 'Unlock layout' : 'Lock layout'}
@@ -92,7 +92,7 @@ export default function DashboardPage() {
 
           <button
             onClick={resetToDefault}
-            className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 text-sm text-slate-600 dark:text-slate-400 transition"
+            className="flex items-center gap-2 px-3 py-2 bg-surface border border-border-subtle rounded-lg hover:bg-surface-muted text-sm text-slate-600 dark:text-slate-400 transition"
             aria-label="Reset to default"
             title="Reset layout"
           >
@@ -103,7 +103,7 @@ export default function DashboardPage() {
 
       {/* Info Banner */}
       {!isLayoutLocked && (
-        <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-sm text-blue-600 dark:text-blue-400">
+        <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 border border-blue-200 dark:border-blue-800 rounded-lg text-sm text-primary">
           <Layout className="w-4 h-4" />
           <span>Drag widgets by their handle to reorder. Click the icons to resize, hide, or customize each widget.</span>
         </div>

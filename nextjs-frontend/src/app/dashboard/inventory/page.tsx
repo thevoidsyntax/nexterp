@@ -166,29 +166,29 @@ export default function InventoryPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-5 border border-slate-200 dark:border-slate-700">
+        <div className="bg-surface rounded-xl p-5 border border-border-subtle">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-lg bg-green-500"><Package className="w-5 h-5 text-white" /></div>
-            <div><p className="text-2xl font-bold text-slate-900 dark:text-white">{totalCount}</p><p className="text-sm text-slate-500">Stock Items</p></div>
+            <div><p className="text-2xl font-bold text-foreground">{totalCount}</p><p className="text-sm text-slate-500">Stock Items</p></div>
           </div>
         </div>
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-5 border border-slate-200 dark:border-slate-700">
+        <div className="bg-surface rounded-xl p-5 border border-border-subtle">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-lg bg-blue-500"><WarehouseIcon className="w-5 h-5 text-white" /></div>
-            <div><p className="text-2xl font-bold text-slate-900 dark:text-white">{warehouses.length}</p><p className="text-sm text-slate-500">Warehouses</p></div>
+            <div><p className="text-2xl font-bold text-foreground">{warehouses.length}</p><p className="text-sm text-slate-500">Warehouses</p></div>
           </div>
         </div>
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-5 border border-slate-200 dark:border-slate-700">
+        <div className="bg-surface rounded-xl p-5 border border-border-subtle">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-lg bg-orange-500"><Package className="w-5 h-5 text-white" /></div>
-            <div><p className="text-2xl font-bold text-slate-900 dark:text-white">{items.filter(i => i.standardCost && i.standardCost > 0).length}</p><p className="text-sm text-slate-500">Items with Price</p></div>
+            <div><p className="text-2xl font-bold text-foreground">{items.filter(i => i.standardCost && i.standardCost > 0).length}</p><p className="text-sm text-slate-500">Items with Price</p></div>
           </div>
         </div>
       </div>
 
       {/* Table */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-        <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex gap-3">
+      <div className="bg-surface rounded-xl border border-border-subtle overflow-hidden">
+        <div className="p-4 border-b border-border-subtle flex gap-3">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
@@ -196,7 +196,7 @@ export default function InventoryPage() {
               placeholder="Search items..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              className="w-full pl-10 pr-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-green-500"
+              className="w-full pl-10 pr-4 py-2 border border-border-subtle rounded-lg bg-surface text-foreground placeholder-slate-400 focus:ring-2 focus:ring-green-500"
             />
           </div>
         </div>
@@ -217,7 +217,7 @@ export default function InventoryPage() {
           <>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-slate-50 dark:bg-slate-700/50">
+                <thead className="bg-surface-muted">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Code</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Name</th>
@@ -229,11 +229,11 @@ export default function InventoryPage() {
                     <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                <tbody className="divide-y divide-border-subtle">
                   {items.map((item) => (
-                    <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                    <tr key={item.id} className="hover:bg-surface-muted transition-colors">
                       <td className="px-4 py-3 font-mono text-sm text-slate-700 dark:text-slate-300">{item.code}</td>
-                      <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">{item.name}</td>
+                      <td className="px-4 py-3 font-medium text-foreground">{item.name}</td>
                       <td className="px-4 py-3 text-slate-600 dark:text-slate-400 text-sm font-mono">{item.barcode || '-'}</td>
                       <td className="px-4 py-3 text-right text-slate-600 dark:text-slate-400">{item.standardCost ? `$${Number(item.standardCost).toFixed(2)}` : '-'}</td>
                       <td className="px-4 py-3 text-right text-slate-600 dark:text-slate-400">{item.standardPrice ? `$${Number(item.standardPrice).toFixed(2)}` : '-'}</td>
@@ -254,13 +254,13 @@ export default function InventoryPage() {
             </div>
 
             {/* Pagination with Size Selector */}
-            <div className="p-4 border-t border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="p-4 border-t border-border-subtle flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-2 text-sm text-slate-500">
                 <span>Show</span>
                 <select
                   value={pageSize}
                   onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-                  className="px-2 py-1 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                  className="px-2 py-1 border border-border-subtle rounded bg-surface text-foreground"
                 >
                   {PAGE_SIZE_OPTIONS.map((size) => (
                     <option key={size} value={size}>{size}</option>
@@ -272,9 +272,9 @@ export default function InventoryPage() {
                 <p className="text-sm text-slate-500 mr-2">
                   {(page - 1) * pageSize + 1} - {Math.min(page * pageSize, totalCount)} of {totalCount}
                 </p>
-                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1} className="p-2 rounded-lg border border-slate-300 dark:border-slate-600 disabled:opacity-50 hover:bg-slate-50 transition-colors"><ChevronLeft className="w-4 h-4" /></button>
+                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1} aria-label="Previous page" className="p-2 rounded-lg border border-border-subtle disabled:opacity-50 hover:bg-slate-50 transition-colors"><ChevronLeft className="w-4 h-4" /></button>
                 <span className="text-sm font-medium px-3">{page} / {totalPages || 1}</span>
-                <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages} className="p-2 rounded-lg border border-slate-300 dark:border-slate-600 disabled:opacity-50 hover:bg-slate-50 transition-colors"><ChevronRight className="w-4 h-4" /></button>
+                <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages} aria-label="Next page" className="p-2 rounded-lg border border-border-subtle disabled:opacity-50 hover:bg-slate-50 transition-colors"><ChevronRight className="w-4 h-4" /></button>
               </div>
             </div>
           </>
@@ -284,43 +284,43 @@ export default function InventoryPage() {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={(e) => e.target === e.currentTarget && setShowModal(false)}>
-          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl w-full max-w-md mx-4">
-            <div className="flex items-center justify-between p-5 border-b border-slate-200 dark:border-slate-700">
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{editingItem ? 'Edit Item' : 'Add Stock Item'}</h3>
+          <div className="bg-surface rounded-xl shadow-xl w-full max-w-md mx-4">
+            <div className="flex items-center justify-between p-5 border-b border-border-subtle">
+              <h3 className="text-lg font-semibold text-foreground">{editingItem ? 'Edit Item' : 'Add Stock Item'}</h3>
               <button onClick={() => setShowModal(false)} aria-label="Close dialog" className="p-1 hover:bg-slate-100 rounded transition-colors"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-5 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name *</label>
-                <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white" required />
+                <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-3 py-2 border border-border-subtle rounded-lg bg-surface text-foreground" required />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Code *</label>
-                  <input type="text" value={formData.code} onChange={(e) => setFormData({ ...formData, code: e.target.value })} className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white font-mono" required />
+                  <input type="text" value={formData.code} onChange={(e) => setFormData({ ...formData, code: e.target.value })} className="w-full px-3 py-2 border border-border-subtle rounded-lg bg-surface text-foreground font-mono" required />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Barcode</label>
-                  <input type="text" value={formData.barcode} onChange={(e) => setFormData({ ...formData, barcode: e.target.value })} className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white font-mono" />
+                  <input type="text" value={formData.barcode} onChange={(e) => setFormData({ ...formData, barcode: e.target.value })} className="w-full px-3 py-2 border border-border-subtle rounded-lg bg-surface text-foreground font-mono" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Standard Cost</label>
-                  <input type="number" step="0.01" value={formData.standardCost} onChange={(e) => setFormData({ ...formData, standardCost: e.target.value })} className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white" />
+                  <input type="number" step="0.01" value={formData.standardCost} onChange={(e) => setFormData({ ...formData, standardCost: e.target.value })} className="w-full px-3 py-2 border border-border-subtle rounded-lg bg-surface text-foreground" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Standard Price</label>
-                  <input type="number" step="0.01" value={formData.standardPrice} onChange={(e) => setFormData({ ...formData, standardPrice: e.target.value })} className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white" />
+                  <input type="number" step="0.01" value={formData.standardPrice} onChange={(e) => setFormData({ ...formData, standardPrice: e.target.value })} className="w-full px-3 py-2 border border-border-subtle rounded-lg bg-surface text-foreground" />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Reorder Level</label>
-                <input type="number" value={formData.reorderLevel} onChange={(e) => setFormData({ ...formData, reorderLevel: e.target.value })} className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white" />
+                <input type="number" value={formData.reorderLevel} onChange={(e) => setFormData({ ...formData, reorderLevel: e.target.value })} className="w-full px-3 py-2 border border-border-subtle rounded-lg bg-surface text-foreground" />
               </div>
             </div>
-            <div className="p-5 border-t border-slate-200 dark:border-slate-700 flex gap-3 justify-end">
-              <button onClick={() => setShowModal(false)} className="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 transition-colors">Cancel</button>
+            <div className="p-5 border-t border-border-subtle flex gap-3 justify-end">
+              <button onClick={() => setShowModal(false)} className="px-4 py-2 border border-border-subtle rounded-lg hover:bg-slate-50 transition-colors">Cancel</button>
               <button onClick={handleSave} disabled={saving || !formData.name || !formData.code} className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg disabled:opacity-50 flex items-center gap-2 transition-colors">
                 {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                 {editingItem ? 'Update' : 'Create'}

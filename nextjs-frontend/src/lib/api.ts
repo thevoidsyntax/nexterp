@@ -119,6 +119,86 @@ interface ModuleDto {
   isEnabled: boolean;
 }
 
+// Per-organization module enable/disable - a different backend controller
+// (OrganizationModulesController) than modulesApi above, which only reads
+// the static module catalog.
+export const organizationModulesApi = {
+  getAll: async (organizationId: string) => {
+    const response = await api.get<ApiResponse<OrganizationModuleDto[]>>(`/organizations/${organizationId}/modules`);
+    return response.data;
+  },
+  enable: async (organizationId: string, moduleCode: string) => {
+    const response = await api.post<ApiResponse<void>>(`/organizations/${organizationId}/modules/${moduleCode}/enable`);
+    return response.data;
+  },
+  disable: async (organizationId: string, moduleCode: string) => {
+    const response = await api.delete<ApiResponse<void>>(`/organizations/${organizationId}/modules/${moduleCode}/disable`);
+    return response.data;
+  },
+};
+
+export interface OrganizationModuleDto {
+  id: string;
+  moduleCode: string;
+  moduleName: string;
+  description?: string;
+  isEnabled: boolean;
+  tier: string;
+  isPremium: boolean;
+}
+
+// ─── Roles API ───────────────────────────────────────────────
+
+export const rolesApi = {
+  getAll: async (params?: { organizationId?: string; page?: number; pageSize?: number; search?: string; isActive?: boolean }) => {
+    const response = await api.get<ApiResponse<PaginatedResponse<RoleDto>>>('/roles', { params });
+    return response.data;
+  },
+  create: async (data: { name: string; description?: string; permissions?: string[] }) => {
+    const response = await api.post<ApiResponse<string>>('/roles', data);
+    return response.data;
+  },
+  update: async (id: string, data: { name: string; description?: string; isActive: boolean }) => {
+    const response = await api.put<ApiResponse<void>>(`/roles/${id}`, data);
+    return response.data;
+  },
+  delete: async (id: string) => {
+    const response = await api.delete<ApiResponse<void>>(`/roles/${id}`);
+    return response.data;
+  },
+  getPermissions: async () => {
+    const response = await api.get<ApiResponse<{ permissions: string[] }>>('/roles/permissions');
+    return response.data;
+  },
+};
+
+export interface RoleDto {
+  id: string;
+  organizationId: string;
+  name: string;
+  description?: string;
+  isActive: boolean;
+  isSystemRole: boolean;
+  userCount: number;
+  permissionCount: number;
+  permissions: string[];
+  createdAt: string;
+  updatedAt?: string;
+}
+
+// ─── Users API (self-service: profile + password) ────────────
+
+export const usersApi = {
+  update: async (id: string, data: { firstName: string; lastName: string; phone?: string; isActive: boolean }) => {
+    const response = await api.put<ApiResponse<void>>(`/users/${id}`, data);
+    return response.data;
+  },
+  changePassword: async (id: string, data: { currentPassword: string; newPassword: string }) => {
+    const response = await api.post<ApiResponse<void>>(`/users/${id}/change-password`, data);
+    return response.data;
+  },
+};
+
 // ─── Dashboard API ────────────────────────────────────────────
 
 export const dashboardApi = {

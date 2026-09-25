@@ -188,35 +188,35 @@ export default function PurchasingPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-5 border border-slate-200 dark:border-slate-700">
+        <div className="bg-surface rounded-xl p-5 border border-border-subtle">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-lg bg-orange-500"><ShoppingCart className="w-5 h-5 text-white" /></div>
-            <div><p className="text-2xl font-bold text-slate-900 dark:text-white">{totalCount}</p><p className="text-sm text-slate-500">Total Orders</p></div>
+            <div><p className="text-2xl font-bold text-foreground">{totalCount}</p><p className="text-sm text-slate-500">Total Orders</p></div>
           </div>
         </div>
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-5 border border-slate-200 dark:border-slate-700">
+        <div className="bg-surface rounded-xl p-5 border border-border-subtle">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-lg bg-blue-500"><Clock className="w-5 h-5 text-white" /></div>
-            <div><p className="text-2xl font-bold text-slate-900 dark:text-white">{orders.filter(o => o.status === 'Draft' || o.status === 'Submitted').length}</p><p className="text-sm text-slate-500">Pending</p></div>
+            <div><p className="text-2xl font-bold text-foreground">{orders.filter(o => o.status === 'Draft' || o.status === 'Submitted').length}</p><p className="text-sm text-slate-500">Pending</p></div>
           </div>
         </div>
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-5 border border-slate-200 dark:border-slate-700">
+        <div className="bg-surface rounded-xl p-5 border border-border-subtle">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-lg bg-green-500"><CheckCircle className="w-5 h-5 text-white" /></div>
-            <div><p className="text-2xl font-bold text-slate-900 dark:text-white">{orders.filter(o => o.status === 'Approved' || o.status === 'Received').length}</p><p className="text-sm text-slate-500">Approved</p></div>
+            <div><p className="text-2xl font-bold text-foreground">{orders.filter(o => o.status === 'Approved' || o.status === 'Received').length}</p><p className="text-sm text-slate-500">Approved</p></div>
           </div>
         </div>
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-5 border border-slate-200 dark:border-slate-700">
+        <div className="bg-surface rounded-xl p-5 border border-border-subtle">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-lg bg-purple-500"><Building2 className="w-5 h-5 text-white" /></div>
-            <div><p className="text-2xl font-bold text-slate-900 dark:text-white">{suppliers.length}</p><p className="text-sm text-slate-500">Suppliers</p></div>
+            <div><p className="text-2xl font-bold text-foreground">{suppliers.length}</p><p className="text-sm text-slate-500">Suppliers</p></div>
           </div>
         </div>
       </div>
 
       {/* Table */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-        <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex gap-3">
+      <div className="bg-surface rounded-xl border border-border-subtle overflow-hidden">
+        <div className="p-4 border-b border-border-subtle flex gap-3">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
@@ -224,7 +224,7 @@ export default function PurchasingPage() {
               placeholder="Search orders..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              className="w-full pl-10 pr-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-orange-500"
+              className="w-full pl-10 pr-4 py-2 border border-border-subtle rounded-lg bg-surface text-foreground placeholder-slate-400 focus:ring-2 focus:ring-orange-500"
             />
           </div>
         </div>
@@ -245,7 +245,7 @@ export default function PurchasingPage() {
           <>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-slate-50 dark:bg-slate-700/50">
+                <thead className="bg-surface-muted">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">PO Number</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Supplier</th>
@@ -256,17 +256,17 @@ export default function PurchasingPage() {
                     <th className="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                <tbody className="divide-y divide-border-subtle">
                   {orders.map((order) => {
                     const config = statusConfig[order.status || 'Draft'] || statusConfig['Draft'];
                     const orderNumber = order.orderNumber || order.id.slice(0, 8);
                     return (
-                      <tr key={order.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-                        <td className="px-4 py-3 font-mono text-sm font-medium text-slate-900 dark:text-white">{orderNumber}</td>
+                      <tr key={order.id} className="hover:bg-surface-muted transition-colors">
+                        <td className="px-4 py-3 font-mono text-sm font-medium text-foreground">{orderNumber}</td>
                         <td className="px-4 py-3 text-slate-600 dark:text-slate-400">{order.supplierName || '-'}</td>
                         <td className="px-4 py-3 text-slate-600 dark:text-slate-400 text-sm">{order.orderDate ? new Date(order.orderDate).toLocaleDateString() : '-'}</td>
                         <td className="px-4 py-3 text-slate-600 dark:text-slate-400 text-sm">{order.expectedDeliveryDate ? new Date(order.expectedDeliveryDate).toLocaleDateString() : '-'}</td>
-                        <td className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-white">{order.totalAmount ? `$${Number(order.totalAmount).toFixed(2)}` : '-'}</td>
+                        <td className="px-4 py-3 text-right font-semibold text-foreground">{order.totalAmount ? `$${Number(order.totalAmount).toFixed(2)}` : '-'}</td>
                         <td className="px-4 py-3 text-center">
                           <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${config.color}`}>
                             <config.icon className="w-3 h-3" /> {config.label}
@@ -293,13 +293,13 @@ export default function PurchasingPage() {
             </div>
 
             {/* Pagination with Size Selector */}
-            <div className="p-4 border-t border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="p-4 border-t border-border-subtle flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-2 text-sm text-slate-500">
                 <span>Show</span>
                 <select
                   value={pageSize}
                   onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-                  className="px-2 py-1 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                  className="px-2 py-1 border border-border-subtle rounded bg-surface text-foreground"
                 >
                   {PAGE_SIZE_OPTIONS.map((size) => (
                     <option key={size} value={size}>{size}</option>
@@ -323,22 +323,22 @@ export default function PurchasingPage() {
       {/* Create PO Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={(e) => e.target === e.currentTarget && setShowModal(false)}>
-          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl w-full max-w-md mx-4">
+          <div className="bg-surface rounded-xl shadow-xl w-full max-w-md mx-4">
             <div className="flex items-center justify-between p-5 border-b border-slate-200">
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">New Purchase Order</h3>
+              <h3 className="text-lg font-semibold text-foreground">New Purchase Order</h3>
               <button onClick={() => setShowModal(false)} aria-label="Close dialog" className="p-1 hover:bg-slate-100 rounded transition-colors"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-5 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Supplier *</label>
-                <select value={formData.supplierId} onChange={(e) => setFormData({ ...formData, supplierId: e.target.value })} className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white" required>
+                <select value={formData.supplierId} onChange={(e) => setFormData({ ...formData, supplierId: e.target.value })} className="w-full px-3 py-2 border border-border-subtle rounded-lg bg-surface text-foreground" required>
                   <option value="">Select Supplier</option>
                   {suppliers.map((s) => <option key={s.id} value={s.id}>{s.supplierName}</option>)}
                 </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Expected Delivery Date</label>
-                <input type="date" value={formData.expectedDeliveryDate} onChange={(e) => setFormData({ ...formData, expectedDeliveryDate: e.target.value })} className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white" />
+                <input type="date" value={formData.expectedDeliveryDate} onChange={(e) => setFormData({ ...formData, expectedDeliveryDate: e.target.value })} className="w-full px-3 py-2 border border-border-subtle rounded-lg bg-surface text-foreground" />
               </div>
             </div>
             <div className="p-5 border-t border-slate-200 flex gap-3 justify-end">
@@ -354,23 +354,23 @@ export default function PurchasingPage() {
       {/* Add Supplier Modal */}
       {showSupplierModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={(e) => e.target === e.currentTarget && setShowSupplierModal(false)}>
-          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl w-full max-w-md mx-4">
+          <div className="bg-surface rounded-xl shadow-xl w-full max-w-md mx-4">
             <div className="flex items-center justify-between p-5 border-b border-slate-200">
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Add Supplier</h3>
+              <h3 className="text-lg font-semibold text-foreground">Add Supplier</h3>
               <button onClick={() => setShowSupplierModal(false)} aria-label="Close dialog" className="p-1 hover:bg-slate-100 rounded transition-colors"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-5 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Supplier Name *</label>
-                <input type="text" value={supplierForm.supplierName} onChange={(e) => setSupplierForm({ ...supplierForm, supplierName: e.target.value })} className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white" required />
+                <input type="text" value={supplierForm.supplierName} onChange={(e) => setSupplierForm({ ...supplierForm, supplierName: e.target.value })} className="w-full px-3 py-2 border border-border-subtle rounded-lg bg-surface text-foreground" required />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email</label>
-                <input type="email" value={supplierForm.email} onChange={(e) => setSupplierForm({ ...supplierForm, email: e.target.value })} className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white" />
+                <input type="email" value={supplierForm.email} onChange={(e) => setSupplierForm({ ...supplierForm, email: e.target.value })} className="w-full px-3 py-2 border border-border-subtle rounded-lg bg-surface text-foreground" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Phone</label>
-                <input type="text" value={supplierForm.phone} onChange={(e) => setSupplierForm({ ...supplierForm, phone: e.target.value })} className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white" />
+                <input type="text" value={supplierForm.phone} onChange={(e) => setSupplierForm({ ...supplierForm, phone: e.target.value })} className="w-full px-3 py-2 border border-border-subtle rounded-lg bg-surface text-foreground" />
               </div>
             </div>
             <div className="p-5 border-t border-slate-200 flex gap-3 justify-end">

@@ -22,11 +22,12 @@ interface AuthState {
   login: (user: User, token: string) => void;
   logout: () => void;
   setLoading: (loading: boolean) => void;
+  updateUser: (patch: Partial<User>) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       token: null,
       isAuthenticated: false,
@@ -49,6 +50,12 @@ export const useAuthStore = create<AuthState>()(
       },
 
       setLoading: (isLoading) => set({ isLoading }),
+
+      updateUser: (patch) => {
+        const current = get().user;
+        if (!current) return;
+        set({ user: { ...current, ...patch } });
+      },
     }),
     {
       name: 'nexterp-auth',

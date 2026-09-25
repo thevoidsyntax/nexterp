@@ -156,7 +156,7 @@ export default function AuditPage() {
         actions={
           <button
             onClick={exportAuditLog}
-            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 text-sm"
+            className="flex items-center gap-2 px-4 py-2 bg-surface border border-border-subtle rounded-lg hover:bg-surface-muted text-sm"
           >
             <Download className="w-4 h-4" />
             Export
@@ -193,7 +193,7 @@ export default function AuditPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+      <div className="bg-surface rounded-xl border border-border-subtle p-4">
         <div className="flex flex-wrap gap-4">
           {/* Search */}
           <div className="relative flex-1 min-w-[200px]">
@@ -203,7 +203,7 @@ export default function AuditPage() {
               placeholder="Search users, entities..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-10 pr-4 py-2 border border-border-subtle rounded-lg bg-surface text-foreground placeholder-slate-400 focus:ring-2 focus:ring-primary"
             />
           </div>
 
@@ -211,7 +211,7 @@ export default function AuditPage() {
           <select
             value={filterAction}
             onChange={(e) => setFilterAction(e.target.value)}
-            className="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+            className="px-3 py-2 border border-border-subtle rounded-lg bg-surface text-foreground"
           >
             <option value="all">All Actions</option>
             <option value="create">Created</option>
@@ -226,7 +226,7 @@ export default function AuditPage() {
           <select
             value={filterEntity}
             onChange={(e) => setFilterEntity(e.target.value)}
-            className="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+            className="px-3 py-2 border border-border-subtle rounded-lg bg-surface text-foreground"
           >
             <option value="all">All Entities</option>
             {uniqueEntities.map((entity) => (
@@ -240,7 +240,7 @@ export default function AuditPage() {
           <select
             value={dateRange}
             onChange={(e) => setDateRange(e.target.value)}
-            className="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+            className="px-3 py-2 border border-border-subtle rounded-lg bg-surface text-foreground"
           >
             <option value="all">All Time</option>
             <option value="today">Today</option>
@@ -251,7 +251,7 @@ export default function AuditPage() {
       </div>
 
       {/* Audit Table */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+      <div className="bg-surface rounded-xl border border-border-subtle overflow-hidden">
         {filteredData.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-slate-400">
             <Clock className="w-12 h-12 mb-4 opacity-50" />
@@ -259,7 +259,7 @@ export default function AuditPage() {
             <p className="text-sm mt-1">Try adjusting your filters</p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-200 dark:divide-slate-700">
+          <div className="divide-y divide-border-subtle">
             {filteredData.map((entry) => {
               const config = actionConfig[entry.action];
               const Icon = config.icon;
@@ -269,7 +269,7 @@ export default function AuditPage() {
                 <div key={entry.id}>
                   <button
                     onClick={() => setExpandedId(isExpanded ? null : entry.id)}
-                    className="w-full px-4 py-3 flex items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition"
+                    className="w-full px-4 py-3 flex items-center gap-4 hover:bg-surface-muted transition"
                   >
                     {/* Action Icon */}
                     <div className={cn('p-2 rounded-full shrink-0', config.color)}>
@@ -279,7 +279,7 @@ export default function AuditPage() {
                     {/* Main Content */}
                     <div className="flex-1 min-w-0 text-left">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium text-slate-900 dark:text-white">{entry.userName}</span>
+                        <span className="font-medium text-foreground">{entry.userName}</span>
                         <span className="text-slate-500">{config.label.toLowerCase()}</span>
                         <span className="text-slate-400">{entry.entityType}</span>
                         <span className="font-medium text-slate-800 dark:text-slate-200">{entry.entityName}</span>
@@ -306,13 +306,13 @@ export default function AuditPage() {
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
                           <span className="text-slate-500">Timestamp</span>
-                          <p className="font-medium text-slate-900 dark:text-white">
+                          <p className="font-medium text-foreground">
                             {new Date(entry.timestamp).toLocaleString()}
                           </p>
                         </div>
                         <div>
                           <span className="text-slate-500">Email</span>
-                          <p className="font-medium text-slate-900 dark:text-white">{entry.userEmail}</p>
+                          <p className="font-medium text-foreground">{entry.userEmail}</p>
                         </div>
                         {entry.changes && entry.changes.length > 0 && (
                           <div className="col-span-2">
@@ -332,7 +332,7 @@ export default function AuditPage() {
                         {entry.ipAddress && (
                           <div>
                             <span className="text-slate-500">IP Address</span>
-                            <p className="font-mono text-slate-900 dark:text-white">{entry.ipAddress}</p>
+                            <p className="font-mono text-foreground">{entry.ipAddress}</p>
                           </div>
                         )}
                       </div>
@@ -360,13 +360,13 @@ function StatCard({
   color: string;
 }) {
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-xl p-5 border border-slate-200 dark:border-slate-700">
+    <div className="bg-surface rounded-xl p-5 border border-border-subtle">
       <div className="flex items-center gap-3">
         <div className={cn('p-2.5 rounded-lg', color)}>
           <Icon className="w-5 h-5 text-white" />
         </div>
         <div>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white">{value}</p>
+          <p className="text-2xl font-bold text-foreground">{value}</p>
           <p className="text-sm text-slate-500">{label}</p>
         </div>
       </div>

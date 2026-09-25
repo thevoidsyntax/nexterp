@@ -51,7 +51,7 @@ function getActionColor(action: string): string {
     case 'create':
       return 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400';
     case 'update':
-      return 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400';
+      return 'bg-blue-100 dark:bg-blue-900/30 text-primary';
     case 'delete':
       return 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400';
     case 'approve':
@@ -157,7 +157,7 @@ export default function ActivityPage() {
       </div>
 
       {/* Activity Timeline */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+      <div className="bg-surface rounded-xl border border-border-subtle overflow-hidden">
         {activities.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-slate-400">
             <Clock className="w-12 h-12 mb-4 opacity-50" />
@@ -165,7 +165,7 @@ export default function ActivityPage() {
             <p className="text-sm mt-1">Activities will appear here as users interact with the system</p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-200 dark:divide-slate-700">
+          <div className="divide-y divide-border-subtle">
             {Object.entries(groupedActivities).map(([date, dayActivities]) => (
               <div key={date}>
                 <div className="px-4 py-2 bg-slate-50 dark:bg-slate-900/50">
@@ -197,13 +197,13 @@ function StatCard({
   color: string;
 }) {
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-xl p-5 border border-slate-200 dark:border-slate-700">
+    <div className="bg-surface rounded-xl p-5 border border-border-subtle">
       <div className="flex items-center gap-3">
         <div className={cn('p-2.5 rounded-lg', color)}>
           <Icon className="w-5 h-5 text-white" />
         </div>
         <div>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white">{value}</p>
+          <p className="text-2xl font-bold text-foreground">{value}</p>
           <p className="text-sm text-slate-500">{label}</p>
         </div>
       </div>
@@ -216,7 +216,7 @@ function ActivityRow({ activity }: { activity: ReturnType<typeof useActivityStor
   const EntityIcon = entityIcons[activity.entityType] || FileText;
 
   return (
-    <div className="px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition">
+    <div className="px-4 py-3 hover:bg-surface-muted transition">
       <div className="flex items-start gap-4">
         {/* Action Icon */}
         <div className={cn('p-2 rounded-full shrink-0', getActionColor(activity.action))}>
@@ -226,7 +226,7 @@ function ActivityRow({ activity }: { activity: ReturnType<typeof useActivityStor
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-medium text-slate-900 dark:text-white">{activity.userName}</span>
+            <span className="font-medium text-foreground">{activity.userName}</span>
             <span className="text-slate-500">{activity.action}</span>
             <span className="flex items-center gap-1 text-slate-600 dark:text-slate-400">
               <EntityIcon className="w-3.5 h-3.5" />

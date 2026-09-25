@@ -58,7 +58,7 @@ export default function WorkflowsPage() {
           { label: 'Workflows' },
         ]}
         actions={
-          <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">
+          <button className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition">
             <Plus className="w-4 h-4" />
             Create Workflow
           </button>
@@ -67,11 +67,11 @@ export default function WorkflowsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Workflow List */}
-        <div className="lg:col-span-1 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-          <div className="p-4 border-b border-slate-200 dark:border-slate-700">
-            <h3 className="font-semibold text-slate-900 dark:text-white">Workflows</h3>
+        <div className="lg:col-span-1 bg-surface rounded-xl border border-border-subtle overflow-hidden">
+          <div className="p-4 border-b border-border-subtle">
+            <h3 className="font-semibold text-foreground">Workflows</h3>
           </div>
-          <div className="divide-y divide-slate-100 dark:divide-slate-700">
+          <div className="divide-y divide-border-subtle">
             {workflows.map((workflow) => (
               <button
                 key={workflow.id}
@@ -79,12 +79,12 @@ export default function WorkflowsPage() {
                 className={cn(
                   'w-full p-4 text-left transition',
                   selectedWorkflow?.id === workflow.id
-                    ? 'bg-blue-50 dark:bg-blue-900/20'
-                    : 'hover:bg-slate-50 dark:hover:bg-slate-700/30'
+                    ? 'bg-primary/10'
+                    : 'hover:bg-surface-muted'
                 )}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-medium text-slate-900 dark:text-white">{workflow.name}</span>
+                  <span className="font-medium text-foreground">{workflow.name}</span>
                   {workflow.isActive ? (
                     <span className="text-xs px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full">Active</span>
                   ) : (
@@ -100,7 +100,7 @@ export default function WorkflowsPage() {
         </div>
 
         {/* Workflow Builder */}
-        <div className="lg:col-span-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <div className="lg:col-span-2 bg-surface rounded-xl border border-border-subtle overflow-hidden">
           {selectedWorkflow ? (
             <WorkflowBuilder workflow={selectedWorkflow} />
           ) : (
@@ -142,22 +142,22 @@ function WorkflowBuilder({ workflow }: { workflow: Workflow }) {
 
   return (
     <>
-      <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+      <div className="p-4 border-b border-border-subtle flex items-center justify-between">
         <div>
-          <h3 className="font-semibold text-slate-900 dark:text-white">{workflow.name}</h3>
+          <h3 className="font-semibold text-foreground">{workflow.name}</h3>
           <p className="text-sm text-slate-500">Visual workflow builder</p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={addStep}
-            className="flex items-center gap-1 px-3 py-1.5 text-sm border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition"
+            className="flex items-center gap-1 px-3 py-1.5 text-sm border border-border-subtle rounded-lg hover:bg-surface-muted transition"
           >
             <Plus className="w-4 h-4" />
             Add Step
           </button>
           <button
             onClick={() => setIsEditing(!isEditing)}
-            className="flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
+            className="flex items-center gap-1 px-3 py-1.5 text-sm bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition"
           >
             <Save className="w-4 h-4" />
             {isEditing ? 'Save Changes' : 'Edit'}
@@ -177,7 +177,7 @@ function WorkflowBuilder({ workflow }: { workflow: Workflow }) {
 
               <div className="flex items-start gap-4">
                 {/* Step Number */}
-                <div className="w-12 h-12 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-lg shrink-0">
+                <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-lg shrink-0">
                   {index + 1}
                 </div>
 
@@ -189,7 +189,7 @@ function WorkflowBuilder({ workflow }: { workflow: Workflow }) {
                       value={step.name}
                       onChange={(e) => updateStep(step.id, { name: e.target.value })}
                       disabled={!isEditing}
-                      className="font-semibold text-slate-900 dark:text-white bg-transparent border-0 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded px-1 py-0.5 -ml-1"
+                      className="font-semibold text-foreground bg-transparent border-0 focus:outline-none focus:ring-2 focus:ring-primary rounded px-1 py-0.5 -ml-1"
                     />
                     <div className="flex items-center gap-2">
                       {step.deadline && (
@@ -217,7 +217,7 @@ function WorkflowBuilder({ workflow }: { workflow: Workflow }) {
                         {step.approvers.map((approver, i) => (
                           <span
                             key={i}
-                            className="text-sm px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded"
+                            className="text-sm px-2 py-1 bg-surface border border-border-subtle rounded"
                           >
                             {approver}
                           </span>
@@ -264,7 +264,7 @@ function WorkflowBuilder({ workflow }: { workflow: Workflow }) {
               <p>No steps defined</p>
               <button
                 onClick={addStep}
-                className="mt-4 text-blue-600 hover:underline"
+                className="mt-4 text-primary hover:underline"
               >
                 Add first step
               </button>

@@ -77,7 +77,7 @@ export default function BalanceSheetPage() {
         actions={
           <button
             onClick={exportReport}
-            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 text-sm"
+            className="flex items-center gap-2 px-4 py-2 bg-surface border border-border-subtle rounded-lg hover:bg-surface-muted text-sm"
           >
             <Download className="w-4 h-4" />
             Export CSV
@@ -86,10 +86,10 @@ export default function BalanceSheetPage() {
       />
 
       {/* Report Period */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+      <div className="bg-surface rounded-xl border border-border-subtle p-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="font-medium text-slate-900 dark:text-white">As of Date</h3>
+            <h3 className="font-medium text-foreground">As of Date</h3>
             <p className="text-sm text-slate-500">{new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
           </div>
           <div className="flex items-center gap-2">
@@ -124,12 +124,12 @@ export default function BalanceSheetPage() {
       </div>
 
       {/* Balance Sheet Table */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-        <div className="p-4 border-b border-slate-200 dark:border-slate-700">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Statement of Financial Position</h2>
+      <div className="bg-surface rounded-xl border border-border-subtle overflow-hidden">
+        <div className="p-4 border-b border-border-subtle">
+          <h2 className="text-lg font-semibold text-foreground">Statement of Financial Position</h2>
         </div>
 
-        <div className="divide-y divide-slate-200 dark:divide-slate-700">
+        <div className="divide-y divide-border-subtle">
           {/* Assets Section */}
           <Section
             title="ASSETS"
@@ -159,12 +159,12 @@ export default function BalanceSheetPage() {
         </div>
 
         {/* Grand Total */}
-        <div className="p-4 bg-slate-50 dark:bg-slate-900/50 border-t-2 border-slate-300 dark:border-slate-600">
+        <div className="p-4 bg-slate-50 dark:bg-slate-900/50 border-t-2 border-border-subtle">
           <div className="flex justify-between items-center">
-            <span className="text-lg font-bold text-slate-900 dark:text-white">
+            <span className="text-lg font-bold text-foreground">
               TOTAL LIABILITIES + EQUITY
             </span>
-            <span className="text-xl font-bold text-slate-900 dark:text-white">
+            <span className="text-xl font-bold text-foreground">
               ${(totalLiabilities + totalEquity).toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </span>
           </div>
@@ -198,13 +198,13 @@ function SummaryCard({
   percentage: string | number;
 }) {
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-xl p-5 border border-slate-200 dark:border-slate-700">
+    <div className="bg-surface rounded-xl p-5 border border-border-subtle">
       <div className="flex items-center gap-3">
         <div className={cn('p-2.5 rounded-lg', color)}>
           <Icon className="w-5 h-5 text-white" />
         </div>
         <div>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white">
+          <p className="text-2xl font-bold text-foreground">
             ${value.toLocaleString('en-US', { minimumFractionDigits: 2 })}
           </p>
           <div className="flex items-center gap-2">
@@ -236,11 +236,11 @@ function Section({
     <div>
       <button
         onClick={onToggleDetails}
-        className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/30 transition"
+        className="w-full px-4 py-3 flex items-center justify-between hover:bg-surface-muted transition"
       >
         <span className="font-semibold text-slate-700 dark:text-slate-300">{title}</span>
         <div className="flex items-center gap-2">
-          <span className="font-semibold text-slate-900 dark:text-white">
+          <span className="font-semibold text-foreground">
             ${total.toLocaleString('en-US', { minimumFractionDigits: 2 })}
           </span>
           <ChevronDown className={cn('w-4 h-4 text-slate-400 transition', showDetails && 'rotate-180')} />

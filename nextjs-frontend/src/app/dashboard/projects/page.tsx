@@ -177,10 +177,10 @@ export default function ProjectsPage() {
 
       {/* Tabs */}
       <div className="flex gap-1 bg-slate-100 dark:bg-slate-700 p-1 rounded-lg w-fit">
-        <button onClick={() => handleTabChange('projects')} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${activeTab === 'projects' ? 'bg-white dark:bg-slate-600 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>
+        <button onClick={() => handleTabChange('projects')} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${activeTab === 'projects' ? 'bg-white dark:bg-slate-600 text-foreground shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>
           <FolderKanban className="w-4 h-4" /> Projects
         </button>
-        <button onClick={() => handleTabChange('tasks')} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${activeTab === 'tasks' ? 'bg-white dark:bg-slate-600 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>
+        <button onClick={() => handleTabChange('tasks')} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${activeTab === 'tasks' ? 'bg-white dark:bg-slate-600 text-foreground shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>
           <CheckCircle2 className="w-4 h-4" /> Tasks
         </button>
       </div>
@@ -193,18 +193,18 @@ export default function ProjectsPage() {
           { label: 'Completed', count: projects.filter(p => p.status === 'Completed').length, color: 'bg-green-500' },
           { label: 'Tasks', count: tasks.length, color: 'bg-purple-500' },
         ].map((stat) => (
-          <div key={stat.label} className="bg-white dark:bg-slate-800 rounded-xl p-5 border border-slate-200 dark:border-slate-700">
+          <div key={stat.label} className="bg-surface rounded-xl p-5 border border-border-subtle">
             <div className="flex items-center gap-3">
               <div className={`p-2.5 rounded-lg ${stat.color}`}><FolderKanban className="w-5 h-5 text-white" /></div>
-              <div><p className="text-2xl font-bold text-slate-900 dark:text-white">{stat.count || 0}</p><p className="text-sm text-slate-500">{stat.label}</p></div>
+              <div><p className="text-2xl font-bold text-foreground">{stat.count || 0}</p><p className="text-sm text-slate-500">{stat.label}</p></div>
             </div>
           </div>
         ))}
       </div>
 
       {/* Table */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-        <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex gap-3">
+      <div className="bg-surface rounded-xl border border-border-subtle overflow-hidden">
+        <div className="p-4 border-b border-border-subtle flex gap-3">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
@@ -212,7 +212,7 @@ export default function ProjectsPage() {
               placeholder={activeTab === 'projects' ? 'Search projects...' : 'Search tasks...'}
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              className="w-full pl-10 pr-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-cyan-500"
+              className="w-full pl-10 pr-4 py-2 border border-border-subtle rounded-lg bg-surface text-foreground placeholder-slate-400 focus:ring-2 focus:ring-cyan-500"
             />
           </div>
         </div>
@@ -235,7 +235,7 @@ export default function ProjectsPage() {
             <>
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-slate-50 dark:bg-slate-700/50">
+                  <thead className="bg-surface-muted">
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Code</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Project Name</th>
@@ -247,14 +247,14 @@ export default function ProjectsPage() {
                       <th className="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                  <tbody className="divide-y divide-border-subtle">
                     {projects.map((proj) => {
                       const config = statusConfig[proj.status || 'Planning'] || statusConfig['Planning'];
                       return (
-                        <tr key={proj.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-                          <td className="px-4 py-3 font-mono text-sm font-medium text-slate-900 dark:text-white">{proj.code || proj.id.slice(0, 6)}</td>
+                        <tr key={proj.id} className="hover:bg-surface-muted transition-colors">
+                          <td className="px-4 py-3 font-mono text-sm font-medium text-foreground">{proj.code || proj.id.slice(0, 6)}</td>
                           <td className="px-4 py-3">
-                            <div className="font-medium text-slate-900 dark:text-white">{proj.name}</div>
+                            <div className="font-medium text-foreground">{proj.name}</div>
                             {proj.description && <div className="text-xs text-slate-400 mt-0.5 line-clamp-1">{proj.description}</div>}
                           </td>
                           <td className="px-4 py-3 text-slate-600 dark:text-slate-400 text-sm">{proj.startDate ? new Date(proj.startDate).toLocaleDateString() : '-'}</td>
@@ -289,13 +289,13 @@ export default function ProjectsPage() {
               </div>
 
               {/* Pagination with Size Selector */}
-              <div className="p-4 border-t border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="p-4 border-t border-border-subtle flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="flex items-center gap-2 text-sm text-slate-500">
                   <span>Show</span>
                   <select
                     value={pageSize}
                     onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-                    className="px-2 py-1 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                    className="px-2 py-1 border border-border-subtle rounded bg-surface text-foreground"
                   >
                     {PAGE_SIZE_OPTIONS.map((size) => (
                       <option key={size} value={size}>{size}</option>
@@ -333,7 +333,7 @@ export default function ProjectsPage() {
             <>
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-slate-50 dark:bg-slate-700/50">
+                  <thead className="bg-surface-muted">
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Task</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Project</th>
@@ -343,13 +343,13 @@ export default function ProjectsPage() {
                       <th className="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase">Status</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                  <tbody className="divide-y divide-border-subtle">
                     {tasks.map((task) => {
                       const config = statusConfig[task.status || 'Todo'] || statusConfig['Todo'];
                       const priorityColors: Record<string, string> = { Low: 'text-slate-500', Medium: 'text-blue-500', High: 'text-orange-500', Critical: 'text-red-500' };
                       return (
-                        <tr key={task.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-                          <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">{task.title}</td>
+                        <tr key={task.id} className="hover:bg-surface-muted transition-colors">
+                          <td className="px-4 py-3 font-medium text-foreground">{task.title}</td>
                           <td className="px-4 py-3 text-slate-600 dark:text-slate-400 text-sm">{task.projectName || '-'}</td>
                           <td className="px-4 py-3 text-slate-600 dark:text-slate-400 text-sm">{task.dueDate ? new Date(task.dueDate).toLocaleDateString() : '-'}</td>
                           <td className="px-4 py-3 text-center">
@@ -376,13 +376,13 @@ export default function ProjectsPage() {
               </div>
 
               {/* Pagination with Size Selector */}
-              <div className="p-4 border-t border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="p-4 border-t border-border-subtle flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="flex items-center gap-2 text-sm text-slate-500">
                   <span>Show</span>
                   <select
                     value={pageSize}
                     onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-                    className="px-2 py-1 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                    className="px-2 py-1 border border-border-subtle rounded bg-surface text-foreground"
                   >
                     {PAGE_SIZE_OPTIONS.map((size) => (
                       <option key={size} value={size}>{size}</option>
@@ -407,40 +407,40 @@ export default function ProjectsPage() {
       {/* Create Project Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={(e) => e.target === e.currentTarget && setShowModal(false)}>
-          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl w-full max-w-md mx-4">
-            <div className="flex items-center justify-between p-5 border-b border-slate-200 dark:border-slate-700">
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">New Project</h3>
+          <div className="bg-surface rounded-xl shadow-xl w-full max-w-md mx-4">
+            <div className="flex items-center justify-between p-5 border-b border-border-subtle">
+              <h3 className="text-lg font-semibold text-foreground">New Project</h3>
               <button onClick={() => setShowModal(false)} aria-label="Close dialog" className="p-1 hover:bg-slate-100 rounded transition-colors"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-5 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Project Name *</label>
-                <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white" required />
+                <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-3 py-2 border border-border-subtle rounded-lg bg-surface text-foreground" required />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Code</label>
-                <input type="text" value={formData.code} onChange={(e) => setFormData({ ...formData, code: e.target.value })} className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white font-mono" />
+                <input type="text" value={formData.code} onChange={(e) => setFormData({ ...formData, code: e.target.value })} className="w-full px-3 py-2 border border-border-subtle rounded-lg bg-surface text-foreground font-mono" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
-                <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={3} className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white" />
+                <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={3} className="w-full px-3 py-2 border border-border-subtle rounded-lg bg-surface text-foreground" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Start Date</label>
-                  <input type="date" value={formData.startDate} onChange={(e) => setFormData({ ...formData, startDate: e.target.value })} className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white" />
+                  <input type="date" value={formData.startDate} onChange={(e) => setFormData({ ...formData, startDate: e.target.value })} className="w-full px-3 py-2 border border-border-subtle rounded-lg bg-surface text-foreground" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">End Date</label>
-                  <input type="date" value={formData.endDate} onChange={(e) => setFormData({ ...formData, endDate: e.target.value })} className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white" />
+                  <input type="date" value={formData.endDate} onChange={(e) => setFormData({ ...formData, endDate: e.target.value })} className="w-full px-3 py-2 border border-border-subtle rounded-lg bg-surface text-foreground" />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Budget</label>
-                <input type="number" value={formData.budget} onChange={(e) => setFormData({ ...formData, budget: e.target.value })} className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white" />
+                <input type="number" value={formData.budget} onChange={(e) => setFormData({ ...formData, budget: e.target.value })} className="w-full px-3 py-2 border border-border-subtle rounded-lg bg-surface text-foreground" />
               </div>
             </div>
-            <div className="p-5 border-t border-slate-200 dark:border-slate-700 flex gap-3 justify-end">
+            <div className="p-5 border-t border-border-subtle flex gap-3 justify-end">
               <button onClick={() => setShowModal(false)} className="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">Cancel</button>
               <button onClick={handleCreate} disabled={saving || !formData.name} className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg disabled:opacity-50 flex items-center gap-2 transition-colors">
                 {saving && <Loader2 className="w-4 h-4 animate-spin" />}Create Project

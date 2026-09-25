@@ -25,14 +25,14 @@ export default function AdjustmentsPage() {
   return (
     <div className="space-y-6">
       <PageHeader title="Stock Adjustments" subtitle="Record inventory count corrections" breadcrumbs={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'Inventory' }, { label: 'Adjustments' }]} />
-      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+      <div className="bg-surface rounded-xl border border-border-subtle overflow-hidden">
         {adjustments.map(a => (
           <div key={a.id} className="flex items-center gap-4 p-4 border-b border-slate-100 dark:border-slate-700 last:border-0">
             <div className={cn('p-2 rounded-full', a.quantity < 0 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600')}>
               {a.quantity > 0 ? <Plus className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
             </div>
             <div className="flex-1">
-              <p className="font-medium text-slate-900 dark:text-white">{a.itemName}</p>
+              <p className="font-medium text-foreground">{a.itemName}</p>
               <p className="text-sm text-slate-500">{a.reason} · {a.date}</p>
             </div>
             <span className={cn('font-mono font-medium', a.quantity > 0 ? 'text-green-600' : 'text-red-600')}>

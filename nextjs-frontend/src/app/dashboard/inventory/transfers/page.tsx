@@ -27,11 +27,11 @@ export default function TransfersPage() {
   return (
     <div className="space-y-6">
       <PageHeader title="Warehouse Transfers" subtitle="Move inventory between locations" breadcrumbs={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'Inventory' }, { label: 'Transfers' }]} />
-      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+      <div className="bg-surface rounded-xl border border-border-subtle overflow-hidden">
         {transfers.map(t => (
           <div key={t.id} className="flex items-center gap-4 p-4 border-b border-slate-100 dark:border-slate-700 last:border-0">
             <div className="flex-1">
-              <p className="font-medium text-slate-900 dark:text-white">{t.itemName}</p>
+              <p className="font-medium text-foreground">{t.itemName}</p>
               <p className="text-sm text-slate-500">{t.date}</p>
             </div>
             <div className="flex items-center gap-2 text-sm">

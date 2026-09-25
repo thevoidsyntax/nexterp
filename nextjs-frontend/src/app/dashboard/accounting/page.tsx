@@ -198,10 +198,10 @@ export default function AccountingPage() {
 
       {/* Tabs */}
       <div className="flex gap-1 bg-slate-100 dark:bg-slate-700 p-1 rounded-lg w-fit">
-        <button onClick={() => handleTabChange('accounts')} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${activeTab === 'accounts' ? 'bg-white dark:bg-slate-600 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>
+        <button onClick={() => handleTabChange('accounts')} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${activeTab === 'accounts' ? 'bg-white dark:bg-slate-600 text-foreground shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>
           <BookOpen className="w-4 h-4" /> Chart of Accounts
         </button>
-        <button onClick={() => handleTabChange('journals')} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${activeTab === 'journals' ? 'bg-white dark:bg-slate-600 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>
+        <button onClick={() => handleTabChange('journals')} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${activeTab === 'journals' ? 'bg-white dark:bg-slate-600 text-foreground shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>
           <FileText className="w-4 h-4" /> Journal Entries
         </button>
       </div>
@@ -209,19 +209,19 @@ export default function AccountingPage() {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         {['Asset', 'Liability', 'Equity', 'Revenue', 'Expense'].map((type) => (
-          <div key={type} className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+          <div key={type} className="bg-surface rounded-xl p-4 border border-border-subtle">
             <div className="flex items-center gap-2 mb-1">
               <div className={`w-2 h-2 rounded-full ${accountTypeColors[type]?.replace('bg-', 'bg-').replace('-100', '-500')}`} />
               <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">{type}</span>
             </div>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">{accounts.filter(a => a.accountType === type).length}</p>
+            <p className="text-2xl font-bold text-foreground">{accounts.filter(a => a.accountType === type).length}</p>
           </div>
         ))}
       </div>
 
       {/* Table */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-        <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex gap-3">
+      <div className="bg-surface rounded-xl border border-border-subtle overflow-hidden">
+        <div className="p-4 border-b border-border-subtle flex gap-3">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
@@ -229,7 +229,7 @@ export default function AccountingPage() {
               placeholder={activeTab === 'accounts' ? 'Search accounts...' : 'Search journals...'}
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              className="w-full pl-10 pr-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-purple-500"
+              className="w-full pl-10 pr-4 py-2 border border-border-subtle rounded-lg bg-surface text-foreground placeholder-slate-400 focus:ring-2 focus:ring-purple-500"
             />
           </div>
         </div>
@@ -252,7 +252,7 @@ export default function AccountingPage() {
             <>
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-slate-50 dark:bg-slate-700/50">
+                  <thead className="bg-surface-muted">
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Code</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Account Name</th>
@@ -262,11 +262,11 @@ export default function AccountingPage() {
                       <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                  <tbody className="divide-y divide-border-subtle">
                     {accounts.map((acc) => (
-                      <tr key={acc.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-                        <td className="px-4 py-3 font-mono text-sm font-medium text-slate-900 dark:text-white">{acc.accountCode}</td>
-                        <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">{acc.name}</td>
+                      <tr key={acc.id} className="hover:bg-surface-muted transition-colors">
+                        <td className="px-4 py-3 font-mono text-sm font-medium text-foreground">{acc.accountCode}</td>
+                        <td className="px-4 py-3 font-medium text-foreground">{acc.name}</td>
                         <td className="px-4 py-3">
                           <span className={`px-2 py-1 text-xs font-medium rounded-full ${accountTypeColors[acc.accountType || 'Asset'] || 'bg-slate-100 text-slate-700'}`}>{acc.accountType || 'Asset'}</span>
                         </td>
@@ -283,13 +283,13 @@ export default function AccountingPage() {
               </div>
 
               {/* Pagination with Size Selector */}
-              <div className="p-4 border-t border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="p-4 border-t border-border-subtle flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="flex items-center gap-2 text-sm text-slate-500">
                   <span>Show</span>
                   <select
                     value={pageSize}
                     onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-                    className="px-2 py-1 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                    className="px-2 py-1 border border-border-subtle rounded bg-surface text-foreground"
                   >
                     {PAGE_SIZE_OPTIONS.map((size) => (
                       <option key={size} value={size}>{size}</option>
@@ -327,7 +327,7 @@ export default function AccountingPage() {
             <>
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-slate-50 dark:bg-slate-700/50">
+                  <thead className="bg-surface-muted">
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Entry #</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Date</th>
@@ -337,12 +337,12 @@ export default function AccountingPage() {
                       <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase">Total Credit</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                  <tbody className="divide-y divide-border-subtle">
                     {journals.map((j) => (
-                      <tr key={j.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-                        <td className="px-4 py-3 font-mono text-sm font-medium text-slate-900 dark:text-white">{j.entryNumber || j.id.slice(0, 8)}</td>
+                      <tr key={j.id} className="hover:bg-surface-muted transition-colors">
+                        <td className="px-4 py-3 font-mono text-sm font-medium text-foreground">{j.entryNumber || j.id.slice(0, 8)}</td>
                         <td className="px-4 py-3 text-slate-600 dark:text-slate-400 text-sm">{j.entryDate ? new Date(j.entryDate).toLocaleDateString() : '-'}</td>
-                        <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">{j.title || '-'}</td>
+                        <td className="px-4 py-3 font-medium text-foreground">{j.title || '-'}</td>
                         <td className="px-4 py-3 text-center">
                           <span className={`px-2 py-1 text-xs font-medium rounded-full ${j.status === 'Posted' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'}`}>{j.status || 'Draft'}</span>
                         </td>
@@ -355,13 +355,13 @@ export default function AccountingPage() {
               </div>
 
               {/* Pagination with Size Selector */}
-              <div className="p-4 border-t border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="p-4 border-t border-border-subtle flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="flex items-center gap-2 text-sm text-slate-500">
                   <span>Show</span>
                   <select
                     value={pageSize}
                     onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-                    className="px-2 py-1 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                    className="px-2 py-1 border border-border-subtle rounded bg-surface text-foreground"
                   >
                     {PAGE_SIZE_OPTIONS.map((size) => (
                       <option key={size} value={size}>{size}</option>
@@ -386,30 +386,30 @@ export default function AccountingPage() {
       {/* Account Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={(e) => e.target === e.currentTarget && setShowModal(false)}>
-          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl w-full max-w-md mx-4">
-            <div className="flex items-center justify-between p-5 border-b border-slate-200 dark:border-slate-700">
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{editingAccount ? 'Edit Account' : 'Add Account'}</h3>
+          <div className="bg-surface rounded-xl shadow-xl w-full max-w-md mx-4">
+            <div className="flex items-center justify-between p-5 border-b border-border-subtle">
+              <h3 className="text-lg font-semibold text-foreground">{editingAccount ? 'Edit Account' : 'Add Account'}</h3>
               <button onClick={() => setShowModal(false)} aria-label="Close dialog" className="p-1 hover:bg-slate-100 rounded transition-colors"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-5 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Account Code *</label>
-                <input type="text" value={formData.accountCode} onChange={(e) => setFormData({ ...formData, accountCode: e.target.value })} className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white font-mono" required />
+                <input type="text" value={formData.accountCode} onChange={(e) => setFormData({ ...formData, accountCode: e.target.value })} className="w-full px-3 py-2 border border-border-subtle rounded-lg bg-surface text-foreground font-mono" required />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Account Name *</label>
-                <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white" required />
+                <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-3 py-2 border border-border-subtle rounded-lg bg-surface text-foreground" required />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Type</label>
-                  <select value={formData.accountType} onChange={(e) => setFormData({ ...formData, accountType: e.target.value })} className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                  <select value={formData.accountType} onChange={(e) => setFormData({ ...formData, accountType: e.target.value })} className="w-full px-3 py-2 border border-border-subtle rounded-lg bg-surface text-foreground">
                     {['Asset', 'Liability', 'Equity', 'Revenue', 'Expense'].map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Class</label>
-                  <select value={formData.class} onChange={(e) => setFormData({ ...formData, class: e.target.value })} className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                  <select value={formData.class} onChange={(e) => setFormData({ ...formData, class: e.target.value })} className="w-full px-3 py-2 border border-border-subtle rounded-lg bg-surface text-foreground">
                     <option value="Debit">Debit</option>
                     <option value="Credit">Credit</option>
                   </select>
@@ -417,10 +417,10 @@ export default function AccountingPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Opening Balance</label>
-                <input type="number" step="0.01" value={formData.openingBalance} onChange={(e) => setFormData({ ...formData, openingBalance: e.target.value })} className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white" />
+                <input type="number" step="0.01" value={formData.openingBalance} onChange={(e) => setFormData({ ...formData, openingBalance: e.target.value })} className="w-full px-3 py-2 border border-border-subtle rounded-lg bg-surface text-foreground" />
               </div>
             </div>
-            <div className="p-5 border-t border-slate-200 dark:border-slate-700 flex gap-3 justify-end">
+            <div className="p-5 border-t border-border-subtle flex gap-3 justify-end">
               <button onClick={() => setShowModal(false)} className="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">Cancel</button>
               <button onClick={handleSave} disabled={saving || !formData.accountCode || !formData.name} className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg disabled:opacity-50 flex items-center gap-2 transition-colors">
                 {saving && <Loader2 className="w-4 h-4 animate-spin" />}

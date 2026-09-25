@@ -58,7 +58,7 @@ export default function ProfitLossPage() {
         actions={
           <button
             onClick={exportReport}
-            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 text-sm"
+            className="flex items-center gap-2 px-4 py-2 bg-surface border border-border-subtle rounded-lg hover:bg-surface-muted text-sm"
           >
             <Download className="w-4 h-4" />
             Export CSV
@@ -67,10 +67,10 @@ export default function ProfitLossPage() {
       />
 
       {/* Date Range */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+      <div className="bg-surface rounded-xl border border-border-subtle p-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="font-medium text-slate-900 dark:text-white">Period</h3>
+            <h3 className="font-medium text-foreground">Period</h3>
             <p className="text-sm text-slate-500">
               January 1, 2024 - December 31, 2024
             </p>
@@ -114,14 +114,14 @@ export default function ProfitLossPage() {
       </div>
 
       {/* P&L Table */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-        <div className="p-4 border-b border-slate-200 dark:border-slate-700">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+      <div className="bg-surface rounded-xl border border-border-subtle overflow-hidden">
+        <div className="p-4 border-b border-border-subtle">
+          <h2 className="text-lg font-semibold text-foreground">
             Statement of Operations
           </h2>
         </div>
 
-        <div className="divide-y divide-slate-200 dark:divide-slate-700">
+        <div className="divide-y divide-border-subtle">
           {/* Revenue Section */}
           <PLSection
             title="REVENUE"
@@ -145,7 +145,7 @@ export default function ProfitLossPage() {
             </div>
           </div>
 
-          <div className="px-4 py-3 bg-blue-50 dark:bg-blue-900/20 border-t border-b border-blue-200 dark:border-blue-800">
+          <div className="px-4 py-3 bg-primary/10 border-t border-b border-blue-200 dark:border-blue-800">
             <div className="flex justify-between items-center">
               <span className="font-bold text-blue-700 dark:text-blue-300">
                 GROSS PROFIT
@@ -203,13 +203,13 @@ function MetricCard({
   trendUp?: boolean;
 }) {
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-xl p-5 border border-slate-200 dark:border-slate-700">
+    <div className="bg-surface rounded-xl p-5 border border-border-subtle">
       <div className="flex items-center gap-3">
         <div className={cn('p-2.5 rounded-lg', color)}>
           <Icon className="w-5 h-5 text-white" />
         </div>
         <div>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white">
+          <p className="text-2xl font-bold text-foreground">
             ${value.toLocaleString('en-US', { minimumFractionDigits: 0 })}
           </p>
           <div className="flex items-center gap-2">
