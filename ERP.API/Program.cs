@@ -390,7 +390,7 @@ using (var scope = app.Services.CreateScope())
         // module-manifest.json's own License.DefaultTier is "starter" - grant that to
         // any organization that doesn't already have an active license, rather than
         // inventing a different default here.
-        var starterTierId = await dbContext.LicenseTiers
+        var defaultTierId = await dbContext.LicenseTiers
             .Where(t => t.Code == LicenseTierCodes.Starter)
             .Select(t => t.Id)
             .FirstAsync();
@@ -407,7 +407,7 @@ using (var scope = app.Services.CreateScope())
         foreach (var org in orgsNeedingLicense)
         {
             dbContext.OrganizationLicenses.Add(new OrganizationLicense(
-                org.Id, starterTierId, DateTime.UtcNow, DateTime.UtcNow.AddYears(1), 10, isAutoRenew: true));
+                org.Id, defaultTierId, DateTime.UtcNow, DateTime.UtcNow.AddYears(1), 10, isAutoRenew: true));
         }
 
         await dbContext.SaveChangesAsync();
