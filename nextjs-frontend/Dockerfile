@@ -31,8 +31,15 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
-# Copy built application
-COPY --from=builder /app/.next/standalone .next/
+# Copy built application. Standalone output must land at /app (so
+# server.js is /app/server.js, matching CMD below and WORKDIR) - it
+# previously landed at /app/.next/server.js instead, which crashed the
+# container on every start ("Cannot find module '/app/server.js'"),
+# surfacing as a 404 with no container actually serving the domain.
+# Standalone output also excludes .next/static and public/ - both must
+# be copied on top separately per Next.js's own docs.
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 
 # Set ownership
@@ -44,9 +51,11 @@ USER nextjs
 # Expose port
 EXPOSE 3000
 
-# Health check
+# Health check - no /health route exists in this app, so this checked a
+# path that 404'd inside the container on every probe, marking it
+# unhealthy and compounding the crash above.
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
 
 # Start the application
 ENV PORT=3000
