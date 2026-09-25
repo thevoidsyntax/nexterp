@@ -303,6 +303,7 @@ builder.Services.AddCors(options =>
         // For production, allow specific Vercel and Railway domains
         var additionalOrigins = new[]
         {
+            "https://nexterp-frontend-production.up.railway.app",
             "https://nextjs-frontend-ivory.vercel.app",
             "https://nextjs-frontend-ok8i1ckcj-rio-wicaksonos-projects.vercel.app",
             "https://rio-wicaksonos-projects.vercel.app",
