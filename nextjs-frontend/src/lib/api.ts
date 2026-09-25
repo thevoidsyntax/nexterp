@@ -147,6 +147,59 @@ export interface OrganizationModuleDto {
   isPremium: boolean;
 }
 
+// ─── Organizations API (org CRUD - distinct from organizationModulesApi
+// above, which only enables/disables modules within an existing org) ──
+
+export interface OrganizationDto {
+  id: string;
+  name: string;
+  code?: string;
+  taxId?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  city?: string;
+  country?: string;
+  postalCode?: string;
+  isActive: boolean;
+  licenseExpiry?: string;
+  userCount: number;
+  moduleCount: number;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export type OrganizationFormData = {
+  name: string;
+  code?: string;
+  taxId?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  city?: string;
+  country?: string;
+  postalCode?: string;
+};
+
+export const organizationsApi = {
+  getAll: async (params?: { page?: number; pageSize?: number; search?: string; isActive?: boolean }) => {
+    const response = await api.get<ApiResponse<PaginatedResponse<OrganizationDto>>>('/organizations', { params });
+    return response.data;
+  },
+  create: async (data: OrganizationFormData) => {
+    const response = await api.post<ApiResponse<string>>('/organizations', data);
+    return response.data;
+  },
+  update: async (id: string, data: OrganizationFormData & { isActive: boolean }) => {
+    const response = await api.put<ApiResponse<void>>(`/organizations/${id}`, data);
+    return response.data;
+  },
+  delete: async (id: string) => {
+    const response = await api.delete<ApiResponse<void>>(`/organizations/${id}`);
+    return response.data;
+  },
+};
+
 // ─── Roles API ───────────────────────────────────────────────
 
 export const rolesApi = {
