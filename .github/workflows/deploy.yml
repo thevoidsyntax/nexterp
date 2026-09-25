@@ -76,13 +76,22 @@ jobs:
         run: railway domain list --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT" || echo "Check Railway dashboard"
 
   # ─────────────────────────────────────────────────────
-  # Vercel Frontend (Next.js)
+  # Railway Frontend (Next.js)
   # ─────────────────────────────────────────────────────
   deploy-frontend:
     name: Deploy Frontend
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment || 'production' }}
     needs: [deploy-backend]
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      # A separate Railway project from the API (see deploy-backend) - confirmed
+      # as the project/service serving nexterp-frontend-production.up.railway.app.
+      # A 3rd, unrelated ERP project also exists on this account; don't swap
+      # these for it without reconfirming the domain.
+      RAILWAY_PROJECT_ID: 'ffa98358-68bc-4eaa-bdd3-d664d7ab7ca8'
+      RAILWAY_SERVICE_ID: 'c6d2d439-c39b-4bb9-8982-d3dd7b105ad3'
+      RAILWAY_ENVIRONMENT: production
     defaults:
       run:
         working-directory: nextjs-frontend
@@ -100,6 +109,8 @@ jobs:
         run: npm ci
 
       - name: Build
+        # Sanity check only - nextjs-frontend/Dockerfile rebuilds from source
+        # on Railway's side, this local build doesn't ship the deployed artifact.
         run: npm run build
         env:
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
@@ -107,11 +118,15 @@ jobs:
       - name: Run tests
         run: npm run test || true
 
-      - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod'
-          working-directory: ./nextjs-frontend
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy to Railway
+        # Runs from nextjs-frontend/ (this job's working-directory default) so
+        # the uploaded build context matches what nextjs-frontend/Dockerfile
+        # expects (COPY package*.json ./, COPY . .) regardless of the
+        # service's dashboard root-directory setting.
+        run: railway up --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT"
+
+      - name: Get Railway URL
+        run: railway domain list --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT" || echo "Check Railway dashboard"
