@@ -366,6 +366,40 @@ using (var scope = app.Services.CreateScope())
             );
             CREATE INDEX IF NOT EXISTS ""IX_OrganizationModules_ModuleDefinitionId"" ON ""OrganizationModules"" (""ModuleDefinitionId"");
             ALTER TABLE ""OrganizationModules"" ADD COLUMN IF NOT EXISTS ""ModuleCode"" text NOT NULL DEFAULT '';
+            CREATE TABLE IF NOT EXISTS ""LicenseTiers"" (
+                ""Id"" uuid NOT NULL,
+                ""Code"" text NOT NULL,
+                ""DisplayName"" text NOT NULL,
+                ""Description"" text NULL,
+                ""SortOrder"" integer NOT NULL DEFAULT 0,
+                ""MonthlyPrice"" numeric NOT NULL DEFAULT 0,
+                ""DefaultMaxUsers"" integer NOT NULL DEFAULT 10,
+                ""IsActive"" boolean NOT NULL DEFAULT TRUE,
+                ""IsDeleted"" boolean NOT NULL DEFAULT FALSE,
+                ""CreatedAt"" timestamp with time zone NOT NULL DEFAULT NOW(),
+                ""UpdatedAt"" timestamp with time zone NULL,
+                ""CreatedBy"" text NULL,
+                ""UpdatedBy"" text NULL,
+                CONSTRAINT ""PK_LicenseTiers"" PRIMARY KEY (""Id"")
+            );
+            CREATE TABLE IF NOT EXISTS ""OrganizationLicenses"" (
+                ""Id"" uuid NOT NULL,
+                ""OrganizationId"" uuid NOT NULL,
+                ""LicenseTierId"" uuid NOT NULL,
+                ""StartDate"" timestamp with time zone NOT NULL DEFAULT NOW(),
+                ""EndDate"" timestamp with time zone NOT NULL,
+                ""MaxUsers"" integer NOT NULL DEFAULT 10,
+                ""IsAutoRenew"" boolean NOT NULL DEFAULT FALSE,
+                ""BillingEmail"" text NULL,
+                ""IsDeleted"" boolean NOT NULL DEFAULT FALSE,
+                ""CreatedAt"" timestamp with time zone NOT NULL DEFAULT NOW(),
+                ""UpdatedAt"" timestamp with time zone NULL,
+                ""CreatedBy"" text NULL,
+                ""UpdatedBy"" text NULL,
+                CONSTRAINT ""PK_OrganizationLicenses"" PRIMARY KEY (""Id""),
+                CONSTRAINT ""FK_OrganizationLicenses_LicenseTiers_LicenseTierId"" FOREIGN KEY (""LicenseTierId"") REFERENCES ""LicenseTiers"" (""Id"") ON DELETE CASCADE
+            );
+            CREATE INDEX IF NOT EXISTS ""IX_OrganizationLicenses_LicenseTierId"" ON ""OrganizationLicenses"" (""LicenseTierId"");
         ");
         logger.LogInformation("Database schema fixes applied successfully");
 
