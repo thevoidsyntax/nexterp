@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { Plus, Shield, Edit2, Trash2, X, Loader2 } from 'lucide-react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
+import { Plus, Shield, Edit2, Trash2, X, Loader2, Search, ChevronDown } from 'lucide-react';
 import { rolesApi, type RoleDto } from '@/lib/api';
 import { PageHeader } from '@/components/PageHeader';
 import { SkeletonLoader } from '@/components/SkeletonLoader';
@@ -18,12 +18,38 @@ type RoleFormData = {
 
 const EMPTY_FORM: RoleFormData = { name: '', description: '', isActive: true, permissions: [] };
 
+function titleCase(segment: string): string {
+  return segment.charAt(0).toUpperCase() + segment.slice(1);
+}
+
+// Permission codes look like "hrm.employees.read" - the first segment is the
+// module key, the rest describes the resource/action within it.
+function groupPermissionsByModule(permissions: string[]): { moduleKey: string; items: string[] }[] {
+  const groups = new Map<string, string[]>();
+  for (const perm of permissions) {
+    const moduleKey = perm.split('.')[0] || perm;
+    const items = groups.get(moduleKey) ?? [];
+    items.push(perm);
+    groups.set(moduleKey, items);
+  }
+  return Array.from(groups.entries())
+    .map(([moduleKey, items]) => ({ moduleKey, items }))
+    .sort((a, b) => a.moduleKey.localeCompare(b.moduleKey));
+}
+
+function formatPermissionLabel(perm: string): string {
+  const rest = perm.split('.').slice(1);
+  return rest.length ? rest.map(titleCase).join(' → ') : perm;
+}
+
 export default function RolesPage() {
   const { user } = useAuthStore();
   const organizationId = user?.organizationId;
   const [roles, setRoles] = useState<RoleDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [availablePermissions, setAvailablePermissions] = useState<string[]>([]);
+  const [permissionSearch, setPermissionSearch] = useState('');
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [showModal, setShowModal] = useState(false);
   const [editingRole, setEditingRole] = useState<RoleDto | null>(null);
   const [formData, setFormData] = useState<RoleFormData>(EMPTY_FORM);
@@ -69,6 +95,7 @@ export default function RolesPage() {
   const openCreate = () => {
     setEditingRole(null);
     setFormData(EMPTY_FORM);
+    setPermissionSearch('');
     setShowModal(true);
   };
 
@@ -90,6 +117,47 @@ export default function RolesPage() {
         ? prev.permissions.filter((p) => p !== perm)
         : [...prev.permissions, perm],
     }));
+  };
+
+  const permissionGroups = useMemo(() => {
+    const groups = groupPermissionsByModule(availablePermissions);
+    const query = permissionSearch.trim().toLowerCase();
+    if (!query) return groups;
+    return groups
+      .map((g) => ({
+        moduleKey: g.moduleKey,
+        items: g.items.filter(
+          (p) => p.toLowerCase().includes(query) || g.moduleKey.toLowerCase().includes(query)
+        ),
+      }))
+      .filter((g) => g.items.length > 0);
+  }, [availablePermissions, permissionSearch]);
+
+  const toggleGroupCollapsed = (moduleKey: string) => {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(moduleKey)) next.delete(moduleKey);
+      else next.add(moduleKey);
+      return next;
+    });
+  };
+
+  const toggleGroupSelection = (items: string[]) => {
+    setFormData((prev) => {
+      const allSelected = items.every((p) => prev.permissions.includes(p));
+      const permissions = allSelected
+        ? prev.permissions.filter((p) => !items.includes(p))
+        : Array.from(new Set([...prev.permissions, ...items]));
+      return { ...prev, permissions };
+    });
+  };
+
+  const selectAllPermissions = () => {
+    setFormData((prev) => ({ ...prev, permissions: [...availablePermissions] }));
+  };
+
+  const clearAllPermissions = () => {
+    setFormData((prev) => ({ ...prev, permissions: [] }));
   };
 
   const handleSave = async () => {
@@ -243,14 +311,66 @@ export default function RolesPage() {
               )}
               {!editingRole && (
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Permissions</label>
-                  <div className="max-h-48 overflow-y-auto border border-border-subtle rounded-lg p-3 space-y-1">
-                    {availablePermissions.map((perm) => (
-                      <label key={perm} className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-                        <input type="checkbox" checked={formData.permissions.includes(perm)} onChange={() => togglePermission(perm)} className="rounded border-border-subtle text-primary focus:ring-primary" />
-                        {perm}
-                      </label>
-                    ))}
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                      Permissions <span className="text-slate-400 font-normal">({formData.permissions.length} selected)</span>
+                    </label>
+                    <div className="flex items-center gap-3 text-xs">
+                      <button type="button" onClick={selectAllPermissions} className="text-primary hover:underline">Select all</button>
+                      <button type="button" onClick={clearAllPermissions} className="text-slate-500 hover:underline">Clear</button>
+                    </div>
+                  </div>
+                  <div className="relative mb-2">
+                    <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      value={permissionSearch}
+                      onChange={(e) => setPermissionSearch(e.target.value)}
+                      placeholder="Search permissions..."
+                      className="w-full pl-8 pr-3 py-1.5 text-sm border border-border-subtle rounded-lg bg-surface text-foreground focus:ring-2 focus:ring-primary focus:border-primary"
+                    />
+                  </div>
+                  <div className="max-h-64 overflow-y-auto border border-border-subtle rounded-lg divide-y divide-border-subtle">
+                    {permissionGroups.length === 0 && (
+                      <p className="p-3 text-sm text-slate-400">No permissions match &quot;{permissionSearch}&quot;.</p>
+                    )}
+                    {permissionGroups.map(({ moduleKey, items }) => {
+                      const collapsed = collapsedGroups.has(moduleKey);
+                      const selectedCount = items.filter((p) => formData.permissions.includes(p)).length;
+                      const allSelected = selectedCount === items.length;
+                      return (
+                        <div key={moduleKey}>
+                          <div className="flex items-center gap-2 px-3 py-2 bg-surface-muted sticky top-0">
+                            <input
+                              type="checkbox"
+                              checked={allSelected}
+                              ref={(el) => { if (el) el.indeterminate = selectedCount > 0 && !allSelected; }}
+                              onChange={() => toggleGroupSelection(items)}
+                              className="rounded border-border-subtle text-primary focus:ring-primary"
+                              aria-label={`Toggle all ${titleCase(moduleKey)} permissions`}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => toggleGroupCollapsed(moduleKey)}
+                              className="flex-1 flex items-center justify-between text-sm font-medium text-foreground"
+                            >
+                              <span>{titleCase(moduleKey)} <span className="text-slate-400 font-normal">({selectedCount}/{items.length})</span></span>
+                              <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${collapsed ? '-rotate-90' : ''}`} />
+                            </button>
+                          </div>
+                          {!collapsed && (
+                            <div className="p-2 space-y-0.5">
+                              {items.map((perm) => (
+                                <label key={perm} className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 px-2 py-1 rounded hover:bg-surface-muted">
+                                  <input type="checkbox" checked={formData.permissions.includes(perm)} onChange={() => togglePermission(perm)} className="rounded border-border-subtle text-primary focus:ring-primary" />
+                                  {formatPermissionLabel(perm)}
+                                </label>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
