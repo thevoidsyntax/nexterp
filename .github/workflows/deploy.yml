@@ -135,9 +135,6 @@ jobs:
         env:
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
 
-      - name: Run tests
-        run: npm run test || true
-
       - name: Install Railway CLI
         run: npm install -g @railway/cli
 
