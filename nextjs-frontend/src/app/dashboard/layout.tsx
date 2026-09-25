@@ -59,8 +59,8 @@ function NavSection({
             aria-current={isActive ? 'page' : undefined}
             className={`flex items-center gap-2.5 px-2.5 py-2 rounded-md transition text-sm ${
               isActive
-                ? 'bg-blue-600 text-white font-medium'
-                : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                ? 'bg-primary text-primary-foreground font-medium'
+                : 'text-slate-400 hover:text-white hover:bg-sidebar-hover/70'
             }`}
           >
             <item.icon className="w-4 h-4 flex-shrink-0" />
@@ -88,22 +88,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-900">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 dark:bg-slate-900 flex">
+    <div className="min-h-screen bg-background flex">
       {/* Compact Sidebar */}
-      <aside className={`fixed top-0 left-0 z-40 h-screen bg-slate-800 transition-all duration-200 flex flex-col ${collapsed ? 'w-16' : 'w-56'}`}>
+      <aside className={`fixed top-0 left-0 z-40 h-screen bg-sidebar transition-all duration-200 flex flex-col ${collapsed ? 'w-16' : 'w-56'}`}>
         {/* Logo */}
-        <div className="flex items-center h-12 px-2 bg-slate-900/50 border-b border-slate-700">
-          <div className="w-7 h-7 rounded-md bg-blue-600 flex items-center justify-center flex-shrink-0">
-            <span className="text-white font-bold text-xs">N</span>
+        <div className="flex items-center h-12 px-2 bg-black/15 border-b border-white/10">
+          <div className="w-7 h-7 rounded-md bg-accent flex items-center justify-center flex-shrink-0">
+            <span className="text-accent-foreground font-heading font-bold text-xs">N</span>
           </div>
-          {!collapsed && <span className="ml-2 text-white font-bold text-sm tracking-wide">NEXTERP</span>}
+          {!collapsed && <span className="ml-2 text-white font-heading font-bold text-sm tracking-wide">NEXTERP</span>}
           <button
             onClick={() => setCollapsed(!collapsed)}
             aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
@@ -116,18 +116,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Nav */}
         <nav className="flex-1 py-2 px-1.5 space-y-4 overflow-y-auto">
           <NavSection items={mainNav} pathname={pathname} collapsed={collapsed} />
-          <div className="border-t border-slate-700/50 pt-2">
+          <div className="border-t border-white/10 pt-2">
             <NavSection items={modulesNav} pathname={pathname} collapsed={collapsed} />
           </div>
-          <div className="border-t border-slate-700/50 pt-2">
+          <div className="border-t border-white/10 pt-2">
             <NavSection items={systemNav} pathname={pathname} collapsed={collapsed} />
           </div>
         </nav>
 
         {/* User */}
-        <div className="p-2 border-t border-slate-700">
+        <div className="p-2 border-t border-white/10">
           <div className={`flex items-center ${collapsed ? 'justify-center' : 'gap-2'}`}>
-            <div className="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center flex-shrink-0">
+            <div className="w-8 h-8 rounded-full bg-sidebar-hover flex items-center justify-center flex-shrink-0">
               <span className="text-white text-xs font-medium">{user?.firstName?.charAt(0) || 'U'}</span>
             </div>
             {!collapsed && (
@@ -137,7 +137,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </div>
             )}
           </div>
-          <button onClick={handleLogout} title="Logout" className={`flex items-center gap-2 w-full mt-1 px-2 py-1.5 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-md transition text-xs ${collapsed ? 'justify-center' : ''}`}>
+          <button onClick={handleLogout} title="Logout" aria-label="Logout" className={`flex items-center gap-2 w-full mt-1 px-2 py-1.5 text-slate-400 hover:text-white hover:bg-sidebar-hover/70 rounded-md transition text-xs ${collapsed ? 'justify-center' : ''}`}>
             <LogOut className="w-3.5 h-3.5 flex-shrink-0" />
             {!collapsed && <span>Logout</span>}
           </button>
@@ -146,9 +146,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Main Content */}
       <div className={`flex-1 transition-all duration-200 ${collapsed ? 'ml-16' : 'ml-56'}`}>
-        <header className="sticky top-0 z-30 h-12 bg-white/80 dark:bg-slate-800/80 backdrop-blur border-b border-slate-200 dark:border-slate-700">
+        <header className="sticky top-0 z-30 h-12 bg-surface/80 backdrop-blur border-b border-border-subtle">
           <div className="flex items-center justify-between h-full px-4">
-            <h1 className="text-sm font-medium text-slate-900 dark:text-white">
+            <h1 className="text-sm font-heading font-medium text-foreground">
               {[...mainNav, ...modulesNav, ...systemNav].find(n => n.href === pathname)?.name || 'Dashboard'}
             </h1>
             <div className="flex items-center gap-2">

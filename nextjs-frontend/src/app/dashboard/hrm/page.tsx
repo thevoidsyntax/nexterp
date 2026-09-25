@@ -206,9 +206,9 @@ export default function HRMPage() {
               data={employeeExportData}
               columns={employeeExportColumns}
               filename="employees"
-              className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 text-sm"
+              className="flex items-center gap-2 px-3 py-2 bg-surface border border-border-subtle rounded-lg hover:bg-surface-muted text-sm"
             />
-            <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">
+            <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition">
               <Plus className="w-4 h-4" /> Add Employee
             </button>
           </div>
@@ -217,29 +217,30 @@ export default function HRMPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-5 border border-slate-200 dark:border-slate-700">
+        <div className="bg-surface rounded-xl p-5 border border-border-subtle">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-lg bg-blue-500"><Building2 className="w-5 h-5 text-white" /></div>
-            <div><p className="text-2xl font-bold text-slate-900 dark:text-white">{totalCount}</p><p className="text-sm text-slate-500">Total Employees</p></div>
+            <div className="p-2.5 rounded-lg bg-primary"><Building2 className="w-5 h-5 text-primary-foreground" /></div>
+            <div><p className="font-heading text-2xl font-bold text-foreground">{totalCount}</p><p className="text-sm text-slate-500">Total Employees</p></div>
           </div>
         </div>
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-5 border border-slate-200 dark:border-slate-700">
+        <div className="bg-surface rounded-xl p-5 border border-border-subtle">
           <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-lg bg-secondary"><Building2 className="w-5 h-5 text-secondary-foreground" /></div>
+            <div><p className="font-heading text-2xl font-bold text-foreground">{departments.length}</p><p className="text-sm text-slate-500">Departments</p></div>
+          </div>
+        </div>
+        <div className="bg-surface rounded-xl p-5 border border-border-subtle">
+          <div className="flex items-center gap-3">
+            {/* Green matches the "Active" status badge color used in the table below */}
             <div className="p-2.5 rounded-lg bg-green-500"><Building2 className="w-5 h-5 text-white" /></div>
-            <div><p className="text-2xl font-bold text-slate-900 dark:text-white">{departments.length}</p><p className="text-sm text-slate-500">Departments</p></div>
-          </div>
-        </div>
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-5 border border-slate-200 dark:border-slate-700">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-lg bg-emerald-500"><Building2 className="w-5 h-5 text-white" /></div>
-            <div><p className="text-2xl font-bold text-slate-900 dark:text-white">{employees.filter(e => e.isActive).length}</p><p className="text-sm text-slate-500">Active Employees</p></div>
+            <div><p className="font-heading text-2xl font-bold text-foreground">{employees.filter(e => e.isActive).length}</p><p className="text-sm text-slate-500">Active Employees</p></div>
           </div>
         </div>
       </div>
 
       {/* Table */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-        <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex gap-3">
+      <div className="bg-surface rounded-xl border border-border-subtle overflow-hidden">
+        <div className="p-4 border-b border-border-subtle flex gap-3">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
@@ -247,7 +248,7 @@ export default function HRMPage() {
               placeholder="Search employees..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              className="w-full pl-10 pr-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-10 pr-4 py-2 border border-border-subtle rounded-lg bg-surface text-foreground placeholder-slate-400 focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
         </div>
@@ -262,13 +263,13 @@ export default function HRMPage() {
           <div className="flex flex-col items-center justify-center h-48 text-slate-400">
             <Users className="w-12 h-12 mb-2 opacity-50" />
             <p>No employees found</p>
-            <button onClick={openCreate} className="mt-3 text-blue-600 hover:underline">Add your first employee</button>
+            <button onClick={openCreate} className="mt-3 text-primary hover:underline">Add your first employee</button>
           </div>
         ) : (
           <>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-slate-50 dark:bg-slate-700/50">
+                <thead className="bg-surface-muted">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Name</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Employee #</th>
@@ -279,10 +280,10 @@ export default function HRMPage() {
                     <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                <tbody className="divide-y divide-border-subtle">
                   {employees.map((emp) => (
-                    <tr key={emp.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-                      <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">{emp.firstName} {emp.lastName}</td>
+                    <tr key={emp.id} className="hover:bg-surface-muted transition-colors">
+                      <td className="px-4 py-3 font-medium text-foreground">{emp.firstName} {emp.lastName}</td>
                       <td className="px-4 py-3 text-slate-600 dark:text-slate-400 text-sm">{emp.employeeNumber || '-'}</td>
                       <td className="px-4 py-3 text-slate-600 dark:text-slate-400 text-sm">{emp.department || '-'}</td>
                       <td className="px-4 py-3 text-slate-600 dark:text-slate-400 text-sm">{emp.email || '-'}</td>
@@ -293,7 +294,7 @@ export default function HRMPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <button onClick={() => openEdit(emp)} aria-label="Edit employee" className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"><Edit2 className="w-4 h-4" /></button>
+                        <button onClick={() => openEdit(emp)} aria-label="Edit employee" className="p-1.5 text-slate-400 hover:text-primary hover:bg-primary/10 rounded transition-colors"><Edit2 className="w-4 h-4" /></button>
                         <button onClick={() => confirmDelete(emp)} aria-label="Delete employee" className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors ml-1"><Trash2 className="w-4 h-4" /></button>
                       </td>
                     </tr>
@@ -303,13 +304,13 @@ export default function HRMPage() {
             </div>
 
             {/* Pagination with Size Selector */}
-            <div className="p-4 border-t border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="p-4 border-t border-border-subtle flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-2 text-sm text-slate-500">
                 <span>Show</span>
                 <select
                   value={pageSize}
                   onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-                  className="px-2 py-1 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                  className="px-2 py-1 border border-border-subtle rounded bg-surface text-foreground"
                 >
                   {PAGE_SIZE_OPTIONS.map((size) => (
                     <option key={size} value={size}>{size}</option>
@@ -321,9 +322,9 @@ export default function HRMPage() {
                 <p className="text-sm text-slate-500 mr-2">
                   {(page - 1) * pageSize + 1} - {Math.min(page * pageSize, totalCount)} of {totalCount}
                 </p>
-                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1} className="p-2 rounded-lg border border-slate-300 dark:border-slate-600 disabled:opacity-50 hover:bg-slate-50 transition-colors"><ChevronLeft className="w-4 h-4" /></button>
+                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1} aria-label="Previous page" className="p-2 rounded-lg border border-border-subtle disabled:opacity-50 hover:bg-surface-muted transition-colors"><ChevronLeft className="w-4 h-4" /></button>
                 <span className="text-sm font-medium px-3">{page} / {totalPages || 1}</span>
-                <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages} className="p-2 rounded-lg border border-slate-300 dark:border-slate-600 disabled:opacity-50 hover:bg-slate-50 transition-colors"><ChevronRight className="w-4 h-4" /></button>
+                <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages} aria-label="Next page" className="p-2 rounded-lg border border-border-subtle disabled:opacity-50 hover:bg-surface-muted transition-colors"><ChevronRight className="w-4 h-4" /></button>
               </div>
             </div>
           </>
@@ -333,10 +334,10 @@ export default function HRMPage() {
       {/* Create/Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={(e) => e.target === e.currentTarget && setShowModal(false)}>
-          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl w-full max-w-md mx-4">
-            <div className="flex items-center justify-between p-5 border-b border-slate-200 dark:border-slate-700">
+          <div className="bg-surface rounded-xl shadow-xl w-full max-w-md mx-4">
+            <div className="flex items-center justify-between p-5 border-b border-border-subtle">
               <div className="flex flex-col">
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{editingEmployee ? 'Edit Employee' : 'Add Employee'}</h3>
+                <h3 className="text-lg font-heading font-semibold text-foreground">{editingEmployee ? 'Edit Employee' : 'Add Employee'}</h3>
                 {!editingEmployee && (
                   <AutoSaveIndicator
                     status={autoSaveStatus}
@@ -354,32 +355,32 @@ export default function HRMPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">First Name *</label>
-                  <input type="text" value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value })} className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white" required />
+                  <input type="text" value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value })} className="w-full px-3 py-2 border border-border-subtle rounded-lg bg-surface text-foreground focus:ring-2 focus:ring-primary focus:border-primary" required />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Last Name *</label>
-                  <input type="text" value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white" required />
+                  <input type="text" value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} className="w-full px-3 py-2 border border-border-subtle rounded-lg bg-surface text-foreground focus:ring-2 focus:ring-primary focus:border-primary" required />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email</label>
-                <input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white" />
+                <input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-3 py-2 border border-border-subtle rounded-lg bg-surface text-foreground focus:ring-2 focus:ring-primary focus:border-primary" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Phone</label>
-                <input type="text" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white" />
+                <input type="text" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full px-3 py-2 border border-border-subtle rounded-lg bg-surface text-foreground focus:ring-2 focus:ring-primary focus:border-primary" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Department</label>
-                <select value={formData.departmentId} onChange={(e) => setFormData({ ...formData, departmentId: e.target.value })} className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                <select value={formData.departmentId} onChange={(e) => setFormData({ ...formData, departmentId: e.target.value })} className="w-full px-3 py-2 border border-border-subtle rounded-lg bg-surface text-foreground focus:ring-2 focus:ring-primary focus:border-primary">
                   <option value="">Select Department</option>
                   {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
               </div>
             </div>
-            <div className="p-5 border-t border-slate-200 dark:border-slate-700 flex gap-3 justify-end">
-              <button onClick={() => setShowModal(false)} className="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 transition-colors">Cancel</button>
-              <button onClick={handleSave} disabled={saving || !formData.firstName || !formData.lastName} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg disabled:opacity-50 flex items-center gap-2 transition-colors">
+            <div className="p-5 border-t border-border-subtle flex gap-3 justify-end">
+              <button onClick={() => setShowModal(false)} className="px-4 py-2 border border-border-subtle rounded-lg hover:bg-surface-muted transition-colors">Cancel</button>
+              <button onClick={handleSave} disabled={saving || !formData.firstName || !formData.lastName} className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg disabled:opacity-50 flex items-center gap-2 transition-colors">
                 {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                 {editingEmployee ? 'Update' : 'Create'}
               </button>

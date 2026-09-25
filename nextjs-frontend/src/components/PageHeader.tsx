@@ -26,7 +26,7 @@ export function PageHeader({
       )}
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+          <h1 className="text-2xl font-heading font-bold text-foreground">
             {title}
           </h1>
           {subtitle && (

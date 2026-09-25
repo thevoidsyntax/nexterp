@@ -44,8 +44,15 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
 
   // Apply the theme to the document whenever it changes — this effect only
   // synchronizes an external system (the DOM), it doesn't set React state.
+  // While theme === 'system', also react live to OS-level scheme changes
+  // instead of only resolving them once at mount/selection time.
   useEffect(() => {
     applyTheme(theme);
+    if (theme !== 'system') return;
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const onChange = () => applyTheme('system');
+    media.addEventListener('change', onChange);
+    return () => media.removeEventListener('change', onChange);
   }, [theme]);
 
   const handleThemeChange = (newTheme: Theme) => {
@@ -112,20 +119,4 @@ function Check({ className }: { className?: string }) {
       <polyline points="20 6 9 17 4 12" />
     </svg>
   );
-}
-
-/**
- * Apply theme class to document on initial load
- * Call this in your layout's body/script
- */
-export function initializeTheme() {
-  const stored = localStorage.getItem('nexterp-theme') as Theme | null;
-  const theme = stored || 'system';
-
-  if (theme === 'system') {
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    document.documentElement.classList.toggle('dark', prefersDark);
-  } else {
-    document.documentElement.classList.toggle('dark', theme === 'dark');
-  }
 }
