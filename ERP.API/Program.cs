@@ -563,11 +563,28 @@ using (var scope = app.Services.CreateScope())
             ");
         }
 
-        // Seed Organization License
+        // Seed Organization License - upgrade the demo org to Enterprise so every
+        // module can be enabled for demo purposes. The earlier ungated license
+        // bootstrap above already grants every org (including this one, once it
+        // exists) a Starter license by default, and that runs regardless of
+        // SEED_DEMO_DATA - so a plain "insert if none exists" here would never
+        // fire once that Starter license is already in place, silently leaving
+        // the demo org stuck on Starter forever. UPDATE-then-INSERT instead.
+        var enterpriseTierId = await dbContext.LicenseTiers
+            .Where(t => t.Code == LicenseTierCodes.Enterprise)
+            .Select(t => t.Id)
+            .FirstAsync();
+
+        await dbContext.Database.ExecuteSqlRawAsync($@"
+            UPDATE ""OrganizationLicenses""
+            SET ""LicenseTierId"" = '{enterpriseTierId}', ""EndDate"" = NOW() + INTERVAL '1 year', ""MaxUsers"" = 100, ""UpdatedAt"" = NOW()
+            WHERE ""OrganizationId"" = '{demoOrgId}' AND NOT ""IsDeleted"";
+        ");
+
         await dbContext.Database.ExecuteSqlRawAsync($@"
             INSERT INTO ""OrganizationLicenses"" (""Id"", ""OrganizationId"", ""LicenseTierId"", ""StartDate"", ""EndDate"", ""MaxUsers"", ""IsAutoRenew"", ""BillingEmail"", ""IsDeleted"", ""CreatedAt"", ""UpdatedAt"")
-            SELECT '{Guid.NewGuid()}', '{demoOrgId}', '{proTierId}', NOW(), NOW() + INTERVAL '1 year', 100, TRUE, 'billing@nexterp.com', FALSE, NOW(), NOW()
-            WHERE NOT EXISTS (SELECT 1 FROM ""OrganizationLicenses"" WHERE ""OrganizationId"" = '{demoOrgId}');
+            SELECT '{Guid.NewGuid()}', '{demoOrgId}', '{enterpriseTierId}', NOW(), NOW() + INTERVAL '1 year', 100, TRUE, 'billing@nexterp.com', FALSE, NOW(), NOW()
+            WHERE NOT EXISTS (SELECT 1 FROM ""OrganizationLicenses"" WHERE ""OrganizationId"" = '{demoOrgId}' AND NOT ""IsDeleted"");
         ");
 
         logger.LogInformation("Demo data ensured successfully");
