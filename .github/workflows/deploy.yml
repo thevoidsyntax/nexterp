@@ -32,10 +32,15 @@ jobs:
       # `up`/`variable`/`domain` all resolve against a *linked* project, and
       # nothing here ever links one — that's why "Service not found" persisted
       # even after the service ID and the token were both fixed. Passing
-      # --project explicitly is required; find the project ID on the Railway
-      # dashboard under Project Settings → General, and add it as this repo
-      # secret.
-      RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+      # --project explicitly is required.
+      #
+      # IDs below are for the project whose service serves
+      # api-production-ab1b.up.railway.app (the URL nextjs-frontend actually
+      # talks to) — confirmed against the Railway dashboard, not guessed.
+      # Two other unrelated ERP projects exist in the same Railway account;
+      # don't swap these for one of those without reconfirming the domain.
+      RAILWAY_PROJECT_ID: '5aa9d430-1ef0-4abd-8d62-0c85ffee2494'
+      RAILWAY_SERVICE_ID: '8671206e-8d29-43a9-a4ac-5db103504390'
     steps:
       - uses: actions/checkout@v4
 
@@ -48,9 +53,7 @@ jobs:
         run: npm install -g @railway/cli
 
       - name: Deploy to Railway
-        # Railway service ID (not the "ERP-API" name — that didn't resolve
-        # against this project, "Service not found").
-        run: railway up --project "$RAILWAY_PROJECT_ID" --service 0b6e64f5-43c0-48b5-8088-35c77d43ce91
+        run: railway up --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID"
 
       - name: Set Railway Variables
         run: |
@@ -62,13 +65,12 @@ jobs:
         env:
           JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
           REDIS_CONNECTION_STRING: ${{ secrets.REDIS_CONNECTION_STRING }}
-          RAILWAY_SERVICE_ID: 0b6e64f5-43c0-48b5-8088-35c77d43ce91
 
       - name: Wait for deployment
         run: sleep 20
 
       - name: Get Railway URL
-        run: railway domain list --project "$RAILWAY_PROJECT_ID" --service 0b6e64f5-43c0-48b5-8088-35c77d43ce91 || echo "Check Railway dashboard"
+        run: railway domain list --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" || echo "Check Railway dashboard"
 
   # ─────────────────────────────────────────────────────
   # Vercel Frontend (Next.js)
