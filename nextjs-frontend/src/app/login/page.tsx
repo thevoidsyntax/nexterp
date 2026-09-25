@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store';
 import { authApi } from '@/lib/api';
 import { LogIn, AlertCircle, Loader2 } from 'lucide-react';
+import { Logo } from '@/components/Logo';
 
 interface LoginForm {
   username: string;
@@ -42,10 +43,8 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       <div className="w-full max-w-md p-8 space-y-8 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl">
         <div className="text-center">
-          <div className="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center mb-4">
-            <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m9-7h1m-1 4h1m4-4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
+          <div className="w-16 h-16 mx-auto mb-4">
+            <Logo className="w-16 h-16 rounded-2xl shadow-lg" />
           </div>
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white">NEXTERP</h1>
           <p className="text-slate-500 dark:text-slate-400 mt-2">Enterprise Resource Planning</p>

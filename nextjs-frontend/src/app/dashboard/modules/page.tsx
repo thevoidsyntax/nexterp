@@ -1,12 +1,31 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Shield, Check, X, Loader2 } from 'lucide-react';
+import {
+  Shield, Check, X, Loader2, ShoppingCart, Package, Truck, Users,
+  Calculator, Briefcase, BadgeCheck, Boxes, BarChart3, type LucideIcon,
+} from 'lucide-react';
 import { organizationModulesApi, type OrganizationModuleDto } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 import { PageHeader } from '@/components/PageHeader';
 import { SkeletonLoader } from '@/components/SkeletonLoader';
 import { useToast } from '@/hooks/useToast';
+
+const MODULE_ICONS: Record<string, LucideIcon> = {
+  sales: ShoppingCart,
+  inventory: Package,
+  purchasing: Truck,
+  hrm: Users,
+  accounting: Calculator,
+  projects: Briefcase,
+  quality: BadgeCheck,
+  assets: Boxes,
+  analytics: BarChart3,
+};
+
+function getModuleIcon(moduleCode: string): LucideIcon {
+  return MODULE_ICONS[moduleCode.toLowerCase()] || Shield;
+}
 
 export default function ModulesPage() {
   const { user } = useAuthStore();
@@ -82,12 +101,14 @@ export default function ModulesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border-subtle">
-              {modules.map((mod) => (
+              {modules.map((mod) => {
+                const ModuleIcon = getModuleIcon(mod.moduleCode);
+                return (
                 <tr key={mod.moduleCode} className="hover:bg-surface-muted transition-colors">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-lg bg-surface-muted flex items-center justify-center">
-                        <Shield className="w-5 h-5 text-slate-500" />
+                        <ModuleIcon className="w-5 h-5 text-slate-500" />
                       </div>
                       <div>
                         <p className="font-medium text-foreground">{mod.moduleName}</p>
@@ -123,7 +144,8 @@ export default function ModulesPage() {
                     </button>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         )}

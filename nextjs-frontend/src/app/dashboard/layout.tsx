@@ -7,6 +7,7 @@ import { useAuthStore } from '@/lib/store';
 import { authApi } from '@/lib/api';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { NotificationBell } from '@/components/NotificationBell';
+import { Logo } from '@/components/Logo';
 import {
   LayoutDashboard, Users, Package, ShoppingCart, DollarSign, Briefcase,
   Settings, Shield, Key, Building2, LogOut, ChevronLeft, Menu, Layers, Clock, Eye,
@@ -100,8 +101,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <aside className={`fixed top-0 left-0 z-40 h-screen bg-sidebar transition-all duration-200 flex flex-col ${collapsed ? 'w-16' : 'w-56'}`}>
         {/* Logo */}
         <div className="flex items-center h-12 px-2 bg-black/15 border-b border-white/10">
-          <div className="w-7 h-7 rounded-md bg-accent flex items-center justify-center flex-shrink-0">
-            <span className="text-accent-foreground font-heading font-bold text-xs">N</span>
+          <div className="w-7 h-7 flex items-center justify-center flex-shrink-0">
+            <Logo className="w-6 h-6" markOnly />
           </div>
           {!collapsed && <span className="ml-2 text-white font-heading font-bold text-sm tracking-wide">NEXTERP</span>}
           <button

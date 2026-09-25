@@ -39,7 +39,7 @@ public class EnableOrganizationModuleCommandHandler : IRequestHandler<EnableOrga
 
         // Get the module definition
         var moduleConfig = ModuleConfigurationLoader.GetAllModules()
-            .FirstOrDefault(m => m.Module.Equals(request.ModuleCode, StringComparison.OrdinalIgnoreCase));
+            .FirstOrDefault(m => m.Code.Equals(request.ModuleCode, StringComparison.OrdinalIgnoreCase));
 
         if (moduleConfig == null)
             return Result<bool>.Failure($"Module '{request.ModuleCode}' not found");
@@ -86,8 +86,8 @@ public class EnableOrganizationModuleCommandHandler : IRequestHandler<EnableOrga
         // Create the organization module
         var orgModule = new Domain.Common.Modules.OrganizationModule(
             request.OrganizationId,
-            moduleConfig.Module,
-            moduleConfig.Code);
+            moduleConfig.Code,
+            _currentUser.Username);
 
         _context.OrganizationModules.Add(orgModule);
         await _context.SaveChangesAsync(cancellationToken);

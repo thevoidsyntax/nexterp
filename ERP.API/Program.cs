@@ -25,6 +25,7 @@ using ERP.Application.Common.Integrations;
 using ERP.Application.Common.Documents;
 using ERP.Application.Common.Modules;
 using ERP.Application.Common.Licensing;
+using ERP.Domain.Common.Modules;
 using ERP.Application.Common.Reports;
 using ERP.Infrastructure.Persistence;
 using ERP.Infrastructure.Services;
@@ -367,6 +368,50 @@ using (var scope = app.Services.CreateScope())
             ALTER TABLE ""OrganizationModules"" ADD COLUMN IF NOT EXISTS ""ModuleCode"" text NOT NULL DEFAULT '';
         ");
         logger.LogInformation("Database schema fixes applied successfully");
+
+        // Baseline license tiers and an active license per organization - unlike the
+        // demo org/user/role block below, this isn't "demo data" in the sense that
+        // gating protects against (no password involved), it's reference/catalog data
+        // that EnableOrganizationModuleCommandHandler's license check requires to
+        // exist for ANY organization before it will enable ANY module. Without this,
+        // every "Enable" click on the Modules page fails with "No active license
+        // found for organization". Ungated and re-checked on every startup, same as
+        // the schema fixes above.
+        logger.LogInformation("Ensuring license tiers and organization licenses exist...");
+
+        if (!await dbContext.LicenseTiers.AnyAsync(t => t.Code == LicenseTierCodes.Starter))
+            dbContext.LicenseTiers.Add(new LicenseTier(LicenseTierCodes.Starter, "Starter", 0m, 10, "Basic modules for small businesses", 1));
+        if (!await dbContext.LicenseTiers.AnyAsync(t => t.Code == LicenseTierCodes.Professional))
+            dbContext.LicenseTiers.Add(new LicenseTier(LicenseTierCodes.Professional, "Professional", 299m, 25, "For growing businesses", 2));
+        if (!await dbContext.LicenseTiers.AnyAsync(t => t.Code == LicenseTierCodes.Enterprise))
+            dbContext.LicenseTiers.Add(new LicenseTier(LicenseTierCodes.Enterprise, "Enterprise", 999m, 100, "Full suite with all modules", 3));
+        await dbContext.SaveChangesAsync();
+
+        // module-manifest.json's own License.DefaultTier is "starter" - grant that to
+        // any organization that doesn't already have an active license, rather than
+        // inventing a different default here.
+        var starterTierId = await dbContext.LicenseTiers
+            .Where(t => t.Code == LicenseTierCodes.Starter)
+            .Select(t => t.Id)
+            .FirstAsync();
+
+        var orgIdsWithActiveLicense = await dbContext.OrganizationLicenses
+            .Where(l => !l.IsDeleted && l.EndDate >= DateTime.UtcNow)
+            .Select(l => l.OrganizationId)
+            .ToListAsync();
+
+        var orgsNeedingLicense = await dbContext.Organizations
+            .Where(o => !o.IsDeleted && !orgIdsWithActiveLicense.Contains(o.Id))
+            .ToListAsync();
+
+        foreach (var org in orgsNeedingLicense)
+        {
+            dbContext.OrganizationLicenses.Add(new OrganizationLicense(
+                org.Id, starterTierId, DateTime.UtcNow, DateTime.UtcNow.AddYears(1), 10, isAutoRenew: true));
+        }
+
+        await dbContext.SaveChangesAsync();
+        logger.LogInformation("License tiers and organization licenses ensured successfully");
 
         // Demo/sample data (including a default admin account) is only ever seeded in
         // Development, or when explicitly opted into via SEED_DEMO_DATA=true together
