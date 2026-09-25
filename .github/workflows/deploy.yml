@@ -41,6 +41,9 @@ jobs:
       # don't swap these for one of those without reconfirming the domain.
       RAILWAY_PROJECT_ID: '5aa9d430-1ef0-4abd-8d62-0c85ffee2494'
       RAILWAY_SERVICE_ID: '8671206e-8d29-43a9-a4ac-5db103504390'
+      # Current Railway CLI requires --environment whenever --project is
+      # passed explicitly ("--environment is required when using --project").
+      RAILWAY_ENVIRONMENT: production
     steps:
       - uses: actions/checkout@v4
 
@@ -53,15 +56,15 @@ jobs:
         run: npm install -g @railway/cli
 
       - name: Deploy to Railway
-        run: railway up --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID"
+        run: railway up --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT"
 
       - name: Set Railway Variables
         run: |
-          railway variables set ASPNETCORE_ENVIRONMENT=Production --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID"
-          railway variables set Jwt:SecretKey=$JWT_SECRET_KEY --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID"
-          railway variables set Jwt:AccessTokenExpirationMinutes=15 --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID"
-          railway variables set Jwt:RefreshTokenExpirationDays=7 --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID"
-          railway variables set Redis:ConnectionString=$REDIS_CONNECTION_STRING --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID"
+          railway variables set ASPNETCORE_ENVIRONMENT=Production --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT"
+          railway variables set Jwt:SecretKey=$JWT_SECRET_KEY --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT"
+          railway variables set Jwt:AccessTokenExpirationMinutes=15 --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT"
+          railway variables set Jwt:RefreshTokenExpirationDays=7 --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT"
+          railway variables set Redis:ConnectionString=$REDIS_CONNECTION_STRING --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT"
         env:
           JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
           REDIS_CONNECTION_STRING: ${{ secrets.REDIS_CONNECTION_STRING }}
@@ -70,7 +73,7 @@ jobs:
         run: sleep 20
 
       - name: Get Railway URL
-        run: railway domain list --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" || echo "Check Railway dashboard"
+        run: railway domain list --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT" || echo "Check Railway dashboard"
 
   # ─────────────────────────────────────────────────────
   # Vercel Frontend (Next.js)
