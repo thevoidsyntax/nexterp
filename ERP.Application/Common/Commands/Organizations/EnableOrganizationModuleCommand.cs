@@ -55,7 +55,6 @@ public class EnableOrganizationModuleCommandHandler : IRequestHandler<EnableOrga
 
         // Check license tier for the organization
         var license = await _context.OrganizationLicenses
-            .Include(l => l.LicenseTier)
             .Where(l => l.OrganizationId == request.OrganizationId &&
                        !l.IsDeleted &&
                        l.EndDate >= DateTime.UtcNow)
@@ -66,8 +65,15 @@ public class EnableOrganizationModuleCommandHandler : IRequestHandler<EnableOrga
             return Result<bool>.Failure("No active license found for organization");
 
         // Check if module tier is accessible
+        // LicenseTier is exposed only as a read-only expression-bodied property with
+        // no fluent configuration anywhere, which EF Core's Include() can't resolve
+        // ("The expression 'l.LicenseTier' is invalid inside an 'Include' operation")
+        // - query the tier code directly via the FK instead of navigating it.
         var requiredTier = moduleConfig.Tier;
-        var userTier = license.LicenseTier?.Code ?? "STARTER";
+        var userTier = await _context.LicenseTiers
+            .Where(t => t.Id == license.LicenseTierId)
+            .Select(t => t.Code)
+            .FirstOrDefaultAsync(cancellationToken) ?? "STARTER";
 
         // Simple tier check - higher tier number means higher tier
         var tierOrder = new Dictionary<string, int>

@@ -38,8 +38,10 @@ public class ModuleAccessService : IModuleAccessService
 
     public async Task<bool> IsOrganizationLicensedAsync(Guid organizationId, CancellationToken cancellationToken = default)
     {
+        // LicenseTier is exposed only as a read-only expression-bodied property with no
+        // fluent configuration anywhere, which EF Core's Include() can't resolve - and
+        // the loaded navigation was never actually used here anyway.
         var license = await _context.Set<OrganizationLicense>()
-            .Include(l => l.LicenseTier)
             .FirstOrDefaultAsync(l => l.OrganizationId == organizationId && l.IsActive, cancellationToken);
 
         return license != null;
@@ -99,11 +101,16 @@ public class ModuleAccessService : IModuleAccessService
 
     public async Task<LicenseTier?> GetLicenseTierAsync(Guid organizationId, CancellationToken cancellationToken = default)
     {
+        // See IsOrganizationLicensedAsync - Include(l => l.LicenseTier) can't be
+        // resolved by EF Core here, so look the tier up separately via the FK.
         var license = await _context.Set<OrganizationLicense>()
-            .Include(l => l.LicenseTier)
             .FirstOrDefaultAsync(l => l.OrganizationId == organizationId && l.IsActive, cancellationToken);
 
-        return license?.LicenseTier;
+        if (license == null)
+            return null;
+
+        return await _context.Set<LicenseTier>()
+            .FirstOrDefaultAsync(t => t.Id == license.LicenseTierId, cancellationToken);
     }
 
     public async Task<bool> HasUserCapacityAsync(Guid organizationId, int additionalUsers = 0, CancellationToken cancellationToken = default)
